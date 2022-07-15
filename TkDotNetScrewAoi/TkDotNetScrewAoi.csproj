@@ -67,7 +67,10 @@
   <ItemGroup>
     <Compile Include="cameras\CameraOptDisplay.cs" />
     <Compile Include="cameras\CameraOptHalcon.cs" />
-    <Compile Include="control\Sockets.cs" />
+    <Compile Include="controls\CommandLight.cs" />
+    <Compile Include="controls\SerialPorts.cs" />
+    <Compile Include="controls\Sockets.cs" />
+    <Compile Include="module\Algorithm.cs" />
     <Compile Include="module\Inspection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

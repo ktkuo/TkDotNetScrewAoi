@@ -5,8 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
-using HalconDotNet;
 using TkDotNetScrewAoi.cameras;
+using TkDotNetScrewAoi.control;
+using System.IO.Ports;
+using TkDotNetScrewAoi.view;
+using System.Windows.Forms;
+using HalconDotNet;
 
 namespace TkDotNetScrewAoi.cameras
 {
@@ -101,9 +105,8 @@ namespace TkDotNetScrewAoi.cameras
         public enumImageSaveMode imageSaveMode=enumImageSaveMode.INIT;        
         public HObject imageGet=null;
         public int IntervalGrab=20; //取像週期
-        public CameraOptDisplay ccdDisplay {get; set;}
 
-        private string nameCcd_= "MachineVision:7K0108EPAK00004";
+        private string nameCcd_= "MachineVision:7K0108EPAK00005";
         public string NameCcd { get { return nameCcd_; } set { nameCcd_ = value; } }
 
         private bool isTrigger_= false;
@@ -118,9 +121,11 @@ namespace TkDotNetScrewAoi.cameras
         public ConcurrentQueue<HObject> queueImageTrans = new ConcurrentQueue<HObject>();//圖片傳輸
         public ConcurrentQueue<HObject> queueImageSave = new ConcurrentQueue<HObject>();//圖片儲存
 
-        public CameraOptHalcon()
-        {
 
+        private CameraOptDisplay ccdDisplay;
+        public CameraOptHalcon(CameraOptDisplay cameraOptDisplay)
+        {
+            this.ccdDisplay=cameraOptDisplay;
         }
 
         /// <summary>
@@ -215,7 +220,6 @@ namespace TkDotNetScrewAoi.cameras
                 Console.WriteLine("CLOSE CCD ERROR" +ex.Message);
             }
         }
-
         public void Run() 
         {
             Task.Run(new Action(() => 
@@ -237,8 +241,8 @@ namespace TkDotNetScrewAoi.cameras
                                     HOperatorSet.DispObj(hoImage_, this.ccdDisplay.hWindowRoi_2.HalconWindow);
                                 }else
                                 {
-                                    Thread.Sleep(1);
                                 }
+                                Thread.Sleep(1);
                                 //Thread.Sleep(IntervalGrab);//取樣週期
                                 //HTuple ww, hh; HOperatorSet.GetImageSize(hoImage_,out ww ,out hh);Console.WriteLine(ww.D.ToString()+","+hh.D.ToString());
                             }
@@ -250,11 +254,13 @@ namespace TkDotNetScrewAoi.cameras
                             Console.WriteLine("Grab Delay : " + ex.ToString());
                         }
                     }
+                    Console.WriteLine("離開取向迴圈");
                     //關閉相機
-                    while (this.grabState != enumGrabState.STOP)
+                    while (this.cameraState != enumCameraState.CLOSE)
                     {
                         Close();
                     }
+                    Console.WriteLine("相機關閉完成");
                 }
                 catch (Exception ex)
                 {
