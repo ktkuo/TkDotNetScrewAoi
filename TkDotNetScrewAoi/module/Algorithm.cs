@@ -187,5 +187,10 @@ namespace TkDotNetScrewAoi.module
             }
             return bitmap2;
         }
+
+        public static HObject Bitmap2Hobget32(Bitmap)
+        {
+
+        }
     }
 }

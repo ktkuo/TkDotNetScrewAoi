@@ -265,7 +265,7 @@ namespace TkDotNetScrewAoi.cameras
                                     //HOperatorSet.GrabImageAsync(out hoImage_, hv_AcqHandle, -1);
                                     HOperatorSet.ReadImage(out hoImage_, @"D:\\00_ProgramRepository\\04TkDotNetAoiScrewType\\TkDotNetScrewAoi\\TkDotNetScrewAoi\\imagesTunes\\2022-07-16\\1\\1_1.bmp"); //*讀圖
                                     OnReceiveImg?.Invoke(this, new ImageReceiveArgs(hoImage_));//只要相機開著就持續取像 送出影像
-                                    //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber].HalconWindow);
+                                    HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber].HalconWindow);
                                     //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber +1].HalconWindow);
                                 }else
                                 {

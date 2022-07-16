@@ -98,11 +98,11 @@ namespace TkDotNetScrewAoi.module
         int numberImageCcd2 = 0;
 
         
-        public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(5,6);
+        public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(5,5);
 
         private void OnReceiveImgCcd1(object sender, ImageReceiveArgs e)
         {
-            if (numberImageCcd1<6)
+            if (numberImageCcd1< numberImagePerCcd)
             {
                 stopwatch1.Restart();
                 queueImageCcd1.Enqueue(e.image.Clone());
@@ -111,11 +111,11 @@ namespace TkDotNetScrewAoi.module
         }
         private void OnReceiveImgCcd2(object sender, ImageReceiveArgs e)
         {
-            if (numberImageCcd2 < 6)
-            {
-                stopwatch2.Restart();
+            if (numberImageCcd2 < numberImagePerCcd)
+            {                
                 queueImageCcd2.Enqueue(e.image.Clone());
                 numberImageCcd2++;
+                Console.WriteLine(numberImageCcd2.ToString());
             }
         }
 
@@ -263,7 +263,6 @@ namespace TkDotNetScrewAoi.module
 
         public void ImageCcd1QueueBuffer()
         {
-            
             while (isStream)
             {
                 if (!queueImageCcd1.IsEmpty)
@@ -282,8 +281,25 @@ namespace TkDotNetScrewAoi.module
                         //HOperatorSet.DispObj(hObjectRoi1, displayInspect.hWindowBalls[2].HalconWindow);
                         //HOperatorSet.DispObj(hObjectRoi2, displayInspect.hWindowBalls[3].HalconWindow);
                         stopwatch1.Stop();
-                        Console.WriteLine("stopwatch1 ms :" + stopwatch1.ElapsedMilliseconds.ToString());
+                        
                         Thread.Sleep(1);
+                    }
+                    else
+                    {
+                        if (numberImageCcd1 == numberImagePerCcd)
+                        {
+                            numberImageCcd1 = 0;
+                        }
+                    }
+                }
+                else
+                {
+                    stopwatch2.Stop();
+                    Console.WriteLine("圖數量: " + numberImageCcd1.ToString() + ", stopwatch1 ms :" + stopwatch1.ElapsedMilliseconds.ToString());
+                    if (numberImageCcd1 == numberImagePerCcd)
+                    {
+                        stopwatch2.Restart();
+                        numberImageCcd1 = 0;
                     }
                 }
             }            
@@ -313,14 +329,39 @@ namespace TkDotNetScrewAoi.module
                         Thread.Sleep(1);
                         Console.WriteLine("stopwatch2 ms :" + stopwatch2.ElapsedMilliseconds.ToString());
                     }
+                    else
+                    {
+                        if (numberImageCcd2 == numberImagePerCcd)
+                        {
+                            numberImageCcd2= 0;
+                        }
+                    }
                 }
             }
         }
 
         public void ImageBall2Stream()
         {
+            int memory = 0;
+            Bitmap bitmap1,bitmap2, bitmap3, bitmap4;
             while (true)
             {
+                if(queueImageRoi1.TryDequeue(out bitmap1)) 
+                { 
+                }                   
+                if (queueImageRoi2.TryDequeue(out bitmap2))
+                {
+                }
+                if(queueImageRoi3.TryDequeue(out bitmap3)) 
+                {
+                }
+                if(queueImageRoi4.TryDequeue(out bitmap4)) 
+                {
+                }
+                if(memory<5)
+                    memory++;
+                else
+                    memory= 0;
 
             }
         }        

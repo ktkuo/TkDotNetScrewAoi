@@ -76,7 +76,7 @@ namespace TkDotNetScrewAoi.module
                 for (int j = 0; j < memoryStreams.GetLength(1); j++)
                 {
                     memoryStreams[i, j] = New();
-                    Console.WriteLine("(" + i.ToString() + "," + j.ToString() + ")");
+                    //Console.WriteLine("(" + i.ToString() + "," + j.ToString() + ")");
                 }
             }
         }
