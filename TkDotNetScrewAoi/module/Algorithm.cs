@@ -10,8 +10,6 @@ using System.Drawing.Imaging;
 
 namespace TkDotNetScrewAoi.module
 {
-    
-
     public enum ENUM_BREAK
     {
         INIT,
@@ -19,7 +17,6 @@ namespace TkDotNetScrewAoi.module
         DOWN,
         BREAK,
     }
-
     public enum ENUM_LABLE { }
 
     public class Algorithm
