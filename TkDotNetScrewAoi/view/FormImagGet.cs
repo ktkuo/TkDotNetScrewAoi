@@ -142,5 +142,11 @@ namespace TkDotNetScrewAoi.view
         {
 
         }
+
+        private void btn_test_Click(object sender, EventArgs e)
+        {
+            //inspectionScrewType.imageMemoryStreams.Write(inspectionScrewType.imageMemoryStreams.memoryStreams[0,1],);
+            //inspectionScrewType.imageMemoryStreams.MemoryStreamRest();
+        }
     }
 }

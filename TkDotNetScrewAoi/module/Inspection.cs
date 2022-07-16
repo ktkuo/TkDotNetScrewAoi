@@ -13,6 +13,8 @@ using HalconDotNet;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 
 namespace TkDotNetScrewAoi.module
 {
@@ -94,6 +96,10 @@ namespace TkDotNetScrewAoi.module
         int numberImagePerCcd = 6;
         int numberImageCcd1 = 0;
         int numberImageCcd2 = 0;
+
+        
+        public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(5,6);
+
         private void OnReceiveImgCcd1(object sender, ImageReceiveArgs e)
         {
             if (numberImageCcd1<6)
@@ -315,11 +321,13 @@ namespace TkDotNetScrewAoi.module
         {
             while (true)
             {
-                if ()
-                {
 
-                }
             }
+        }        
+
+        public void MemoryWrite()
+        {
+
         }
 
         public void InspectionDispose()

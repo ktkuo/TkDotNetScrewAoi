@@ -16,7 +16,7 @@ using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 
-namespace TkDotNetScrewAoi.stream
+namespace TkDotNetScrewAoi.module
 {
     public enum MemoryStreamStats
     {
@@ -26,8 +26,6 @@ namespace TkDotNetScrewAoi.stream
         CLOSE,
         DISPOSE,
     }
-
-    
     public class ImageMemoryStream
     {
         private string fileName_ = "1_1";
@@ -37,48 +35,68 @@ namespace TkDotNetScrewAoi.stream
             set { fileName_ = value; }
         }
 
+        public MemoryStream[,] memoryStreams;
 
-        MemoryStreamStats memoryStreamStats = MemoryStreamStats.INIT;
-        MemoryStream memoryStream;
-        public ImageMemoryStream()
+        public ImageMemoryStream(int x, int y)
         {
-            New();
+            memoryStreams = new MemoryStream[x, y];
+            MemoryStreamInit();
         }
-        public void New()
+        public MemoryStream New()
         {
-            if (memoryStreamStats == MemoryStreamStats.INIT)
-            {
-                //
-                memoryStream = new MemoryStream();
-                memoryStreamStats = MemoryStreamStats.OPEN;
-
-                Console.WriteLine("memoryStream New already");
-            }
-            else
-            {
-                Console.WriteLine("memoryStream is already");
-            }
+            MemoryStream memoryStream = new MemoryStream();
+            return memoryStream;
         }
 
-        public void Write(Bitmap bitmap_,string fileName)
+        public int Write(MemoryStream memoryStream_, Bitmap bitmap_, string fileName)
         {
-            bitmap_.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Bmp);
-            byte[] bytes = memoryStream.GetBuffer();  //byte[]   bytes=   ms.ToArray(); 
-            memoryStream.Close();
-            memoryStreamStats = MemoryStreamStats.CLOSE;
+            bitmap_.Save(memoryStream_, System.Drawing.Imaging.ImageFormat.Jpeg);
+            byte[] bytes = memoryStream_.GetBuffer();  //byte[]   bytes=   ms.ToArray(); 
+            memoryStream_.Close();
             var mmf = MemoryMappedFile.CreateOrOpen(fileName, bytes.Length, MemoryMappedFileAccess.ReadWrite);
             var viewAccessor = mmf.CreateViewAccessor(0, bytes.Length);
-            memoryStreamStats = MemoryStreamStats.WRITE;
             viewAccessor.Write(0, bytes.Length); ;
             viewAccessor.WriteArray<byte>(0, bytes, 0, bytes.Length);
-            HttpGet("http://127.0.0.1:8000/read_image/test1/" + bytes.Length.ToString());
+            return bytes.Length;
+            //HttpGet("http://127.0.0.1:8000/read_image/test1/" + bytes.Length.ToString()); 
             //TODO  POST "test1" LENGTH             
         }
-        public void Close()
+        public MemoryStream MemoryDispose(MemoryStream memoryStream_)
         {
-            memoryStream.Close();
-            memoryStream.Dispose();
-            memoryStreamStats = MemoryStreamStats.DISPOSE;
+            memoryStream_.Close();
+            memoryStream_.Dispose();
+            memoryStream_ = null;
+            return memoryStream_;
+        }
+
+        public void MemoryStreamInit()
+        {            
+            for (int i = 0; i < memoryStreams.GetLength(0); i++)
+            {
+                for (int j = 0; j < memoryStreams.GetLength(1); j++)
+                {
+                    memoryStreams[i, j] = New();
+                    Console.WriteLine("(" + i.ToString() + "," + j.ToString() + ")");
+                }
+            }
+        }
+
+        public void MemoryStreamRest()
+        {
+            for (int i = 0; i < memoryStreams.GetLength(0); i++)
+            {
+                for (int j = 0; j < memoryStreams.GetLength(1); j++)
+                {
+                    if(memoryStreams[i, j] != null)
+                    {
+                        memoryStreams[i, j] = MemoryDispose(memoryStreams[i, j]);
+                    }                    
+                }
+            }
+            if (memoryStreams[3, 3] == null)
+            {
+                Console.WriteLine("Yes");
+            }
         }
 
         public void HttpGet(string targetUrl)

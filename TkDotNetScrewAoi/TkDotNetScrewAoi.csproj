@@ -73,10 +73,10 @@
     <Compile Include="halconTxt\get_ball.cs" />
     <Compile Include="module\Algorithm.cs" />
     <Compile Include="module\DisplayInspection.cs" />
+    <Compile Include="module\ImageMemoryStream.cs" />
     <Compile Include="module\Inspection.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="stream\ImageMemoryStream.cs" />
     <Compile Include="view\FormImageDipTune.cs">
       <SubType>Form</SubType>
     </Compile>
