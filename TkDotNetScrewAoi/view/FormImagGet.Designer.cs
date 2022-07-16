@@ -40,6 +40,14 @@
             this.hWControl_Ball2 = new HalconDotNet.HWindowControl();
             this.hWControl_Roi2 = new HalconDotNet.HWindowControl();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.panel5 = new System.Windows.Forms.Panel();
+            this.label_numberImage = new System.Windows.Forms.Label();
+            this.btn_ImageChange = new System.Windows.Forms.Button();
+            this.btn_PreStep = new System.Windows.Forms.Button();
+            this.btn_NextStep = new System.Windows.Forms.Button();
+            this.radioButton_modeInspect = new System.Windows.Forms.RadioButton();
+            this.radioButton_modeDev = new System.Windows.Forms.RadioButton();
+            this.radioButton_modeTune = new System.Windows.Forms.RadioButton();
             this.radioButton_Software = new System.Windows.Forms.RadioButton();
             this.radioButton_External = new System.Windows.Forms.RadioButton();
             this.btn_MechaismTest = new System.Windows.Forms.Button();
@@ -50,6 +58,7 @@
             this.panel4.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel2.SuspendLayout();
+            this.panel5.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -190,6 +199,7 @@
             // 
             this.panel2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel2.Controls.Add(this.panel5);
             this.panel2.Controls.Add(this.radioButton_Software);
             this.panel2.Controls.Add(this.radioButton_External);
             this.panel2.Controls.Add(this.btn_MechaismTest);
@@ -200,11 +210,111 @@
             this.panel2.Size = new System.Drawing.Size(1257, 153);
             this.panel2.TabIndex = 1;
             // 
+            // panel5
+            // 
+            this.panel5.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.panel5.BackColor = System.Drawing.SystemColors.ActiveCaption;
+            this.panel5.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel5.Controls.Add(this.label_numberImage);
+            this.panel5.Controls.Add(this.btn_ImageChange);
+            this.panel5.Controls.Add(this.btn_PreStep);
+            this.panel5.Controls.Add(this.btn_NextStep);
+            this.panel5.Controls.Add(this.radioButton_modeInspect);
+            this.panel5.Controls.Add(this.radioButton_modeDev);
+            this.panel5.Controls.Add(this.radioButton_modeTune);
+            this.panel5.Location = new System.Drawing.Point(3, 3);
+            this.panel5.Name = "panel5";
+            this.panel5.Size = new System.Drawing.Size(294, 147);
+            this.panel5.TabIndex = 5;
+            // 
+            // label_numberImage
+            // 
+            this.label_numberImage.AutoSize = true;
+            this.label_numberImage.Location = new System.Drawing.Point(126, 5);
+            this.label_numberImage.Name = "label_numberImage";
+            this.label_numberImage.Size = new System.Drawing.Size(83, 24);
+            this.label_numberImage.TabIndex = 9;
+            this.label_numberImage.Text = "圖片:0/0";
+            // 
+            // btn_ImageChange
+            // 
+            this.btn_ImageChange.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_ImageChange.Location = new System.Drawing.Point(113, 45);
+            this.btn_ImageChange.Name = "btn_ImageChange";
+            this.btn_ImageChange.Size = new System.Drawing.Size(65, 88);
+            this.btn_ImageChange.TabIndex = 8;
+            this.btn_ImageChange.Text = "換圖";
+            this.btn_ImageChange.UseVisualStyleBackColor = true;
+            this.btn_ImageChange.Visible = false;
+            this.btn_ImageChange.Click += new System.EventHandler(this.btn_ImageChange_Click);
+            // 
+            // btn_PreStep
+            // 
+            this.btn_PreStep.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_PreStep.Location = new System.Drawing.Point(184, 45);
+            this.btn_PreStep.Name = "btn_PreStep";
+            this.btn_PreStep.Size = new System.Drawing.Size(96, 34);
+            this.btn_PreStep.TabIndex = 7;
+            this.btn_PreStep.Text = "上一步";
+            this.btn_PreStep.UseVisualStyleBackColor = true;
+            this.btn_PreStep.Visible = false;
+            this.btn_PreStep.Click += new System.EventHandler(this.btn_PreStep_Click);
+            // 
+            // btn_NextStep
+            // 
+            this.btn_NextStep.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_NextStep.Location = new System.Drawing.Point(184, 99);
+            this.btn_NextStep.Name = "btn_NextStep";
+            this.btn_NextStep.Size = new System.Drawing.Size(96, 34);
+            this.btn_NextStep.TabIndex = 6;
+            this.btn_NextStep.Text = "下一步";
+            this.btn_NextStep.UseVisualStyleBackColor = true;
+            this.btn_NextStep.Visible = false;
+            this.btn_NextStep.Click += new System.EventHandler(this.btn_NextStep_Click);
+            // 
+            // radioButton_modeInspect
+            // 
+            this.radioButton_modeInspect.AutoSize = true;
+            this.radioButton_modeInspect.Checked = true;
+            this.radioButton_modeInspect.Location = new System.Drawing.Point(16, 3);
+            this.radioButton_modeInspect.Name = "radioButton_modeInspect";
+            this.radioButton_modeInspect.Size = new System.Drawing.Size(104, 28);
+            this.radioButton_modeInspect.TabIndex = 2;
+            this.radioButton_modeInspect.TabStop = true;
+            this.radioButton_modeInspect.Text = "檢測運行";
+            this.radioButton_modeInspect.UseVisualStyleBackColor = true;
+            this.radioButton_modeInspect.CheckedChanged += new System.EventHandler(this.radioButton_modeInspect_CheckedChanged);
+            // 
+            // radioButton_modeDev
+            // 
+            this.radioButton_modeDev.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.radioButton_modeDev.AutoSize = true;
+            this.radioButton_modeDev.Location = new System.Drawing.Point(16, 102);
+            this.radioButton_modeDev.Name = "radioButton_modeDev";
+            this.radioButton_modeDev.Size = new System.Drawing.Size(104, 28);
+            this.radioButton_modeDev.TabIndex = 1;
+            this.radioButton_modeDev.Text = "開發模式";
+            this.radioButton_modeDev.UseVisualStyleBackColor = true;
+            this.radioButton_modeDev.CheckedChanged += new System.EventHandler(this.radioButton_modeDev_CheckedChanged);
+            // 
+            // radioButton_modeTune
+            // 
+            this.radioButton_modeTune.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.radioButton_modeTune.AutoSize = true;
+            this.radioButton_modeTune.Location = new System.Drawing.Point(16, 50);
+            this.radioButton_modeTune.Name = "radioButton_modeTune";
+            this.radioButton_modeTune.Size = new System.Drawing.Size(104, 28);
+            this.radioButton_modeTune.TabIndex = 0;
+            this.radioButton_modeTune.Text = "調適模式";
+            this.radioButton_modeTune.UseVisualStyleBackColor = true;
+            this.radioButton_modeTune.CheckedChanged += new System.EventHandler(this.radioButton_modeTune_CheckedChanged);
+            // 
             // radioButton_Software
             // 
             this.radioButton_Software.AutoSize = true;
             this.radioButton_Software.Checked = true;
-            this.radioButton_Software.Location = new System.Drawing.Point(133, 8);
+            this.radioButton_Software.Location = new System.Drawing.Point(413, 16);
             this.radioButton_Software.Name = "radioButton_Software";
             this.radioButton_Software.Size = new System.Drawing.Size(104, 28);
             this.radioButton_Software.TabIndex = 4;
@@ -216,16 +326,17 @@
             // radioButton_External
             // 
             this.radioButton_External.AutoSize = true;
-            this.radioButton_External.Location = new System.Drawing.Point(3, 8);
+            this.radioButton_External.Location = new System.Drawing.Point(303, 16);
             this.radioButton_External.Name = "radioButton_External";
             this.radioButton_External.Size = new System.Drawing.Size(104, 28);
             this.radioButton_External.TabIndex = 3;
             this.radioButton_External.Text = "外部觸發";
             this.radioButton_External.UseVisualStyleBackColor = true;
+            this.radioButton_External.CheckedChanged += new System.EventHandler(this.radioButton_External_CheckedChanged);
             // 
             // btn_MechaismTest
             // 
-            this.btn_MechaismTest.Location = new System.Drawing.Point(133, 81);
+            this.btn_MechaismTest.Location = new System.Drawing.Point(413, 104);
             this.btn_MechaismTest.Name = "btn_MechaismTest";
             this.btn_MechaismTest.Size = new System.Drawing.Size(104, 39);
             this.btn_MechaismTest.TabIndex = 2;
@@ -235,17 +346,17 @@
             // 
             // btn_CcdConnect
             // 
-            this.btn_CcdConnect.Location = new System.Drawing.Point(3, 39);
+            this.btn_CcdConnect.Location = new System.Drawing.Point(303, 50);
             this.btn_CcdConnect.Name = "btn_CcdConnect";
-            this.btn_CcdConnect.Size = new System.Drawing.Size(234, 36);
+            this.btn_CcdConnect.Size = new System.Drawing.Size(214, 36);
             this.btn_CcdConnect.TabIndex = 1;
-            this.btn_CcdConnect.Text = "相機連線";
+            this.btn_CcdConnect.Text = "檢測開始";
             this.btn_CcdConnect.UseVisualStyleBackColor = true;
             this.btn_CcdConnect.Click += new System.EventHandler(this.btn_CcdConnect_Click);
             // 
             // btn_ImageSave
             // 
-            this.btn_ImageSave.Location = new System.Drawing.Point(3, 81);
+            this.btn_ImageSave.Location = new System.Drawing.Point(303, 104);
             this.btn_ImageSave.Name = "btn_ImageSave";
             this.btn_ImageSave.Size = new System.Drawing.Size(104, 39);
             this.btn_ImageSave.TabIndex = 0;
@@ -277,6 +388,8 @@
             this.panel3.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
+            this.panel5.ResumeLayout(false);
+            this.panel5.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -302,5 +415,13 @@
         private System.Windows.Forms.RadioButton radioButton_External;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.Panel panel4;
+        private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.RadioButton radioButton_modeInspect;
+        private System.Windows.Forms.RadioButton radioButton_modeDev;
+        private System.Windows.Forms.RadioButton radioButton_modeTune;
+        private System.Windows.Forms.Button btn_NextStep;
+        private System.Windows.Forms.Button btn_PreStep;
+        private System.Windows.Forms.Label label_numberImage;
+        private System.Windows.Forms.Button btn_ImageChange;
     }
 }

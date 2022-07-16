@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.0" halcon_version="11.0.2" cs="3847775693">
+<procedure name="main">
+<interface/>
+<body>
+<c>**20220716 星宏 冠廷 輸出版本 </c>
+<c>**遍歷文件</c>
+<l>list_files ('D:/00_ProgramRepository/04TkDotNetAoiScrewType/TkDotNetScrewAoi/TkDotNetScrewAoi/imagesTunes/2022-07-16', ['directories'], classFiles)</l>
+<l>saveDirectory:='D:/00_ProgramRepository/04TkDotNetAoiScrewType/TkDotNetScrewAoi/TkDotNetScrewAoi/imageComplete'</l>
+<l>fileName:='01_dataclassifiy'</l>
+<l>size:=500</l>
+<l>grayMin:=70</l>
+<l>grayMax:=90</l>
+<c>**文件路徑分類</c>
+<l>for indexClass := 0 to |classFiles|-1 by 1</l>
+<c> </c>
+<c>    **各標籤路徑</c>
+<l>    path:=classFiles[indexClass]</l>
+<c>    **各圖像路徑</c>
+<l>    list_files (path,['files','follow_links'],imageLoadList)</l>
+<l>    if(|imageLoadList|&gt;0)</l>
+<l>        for indexImage:=0 to |imageLoadList|-1 by 1</l>
+<c>            **拆解檔名</c>
+<l>            parse_filename (imageLoadList[indexImage], baseName, extension, directory)</l>
+<c>            </c>
+<c>            **關聯料夾是否存在</c>
+<l>            file_exists(saveDirectory+'\\'+fileName, fileExists)</l>
+<c>            </c>
+<c>            **無存在21</c>
+<l>            if(fileExists&lt;1)</l>
+<c>                **創建資料夾</c>
+<l>                make_dir (saveDirectory+'\\'+fileName)</l>
+<l>            endif</l>
+<c>            </c>
+<c>            **讀圖            </c>
+<l>            read_image (imageRaw, imageLoadList[indexImage])</l>
+<c>            </c>
+<c>            **取導數  可找邊緣</c>
+<c>            **http://www.ihalcon.com/read-2139.html</c>
+<l>            sobel_amp (imageRaw, edgeAmplitude1, 'sum_abs', 9)</l>
+<c>            </c>
+<c>            **gray_range_rect (imageRaw, ImageResult, 11, 11)</c>
+<c>            </c>
+<c>            **強化  單點像素 與 全圖像素之平均 加大 黑更黑 白更白</c>
+<c>            **res := round((orig - mean) * Factor) + orig</c>
+<l>            emphasize (edgeAmplitude1, imageEmphasize, 12, 12, 4)</l>
+<c>            </c>
+<c>            **通常強化後，需要去躁點            </c>
+<l>            mean_image (edgeAmplitude1, imageMean, 4, 4)</l>
+<c>            **二質化</c>
+<l>            threshold (imageMean, region, 12, 44)</l>
+<c>            </c>
+<c>            **閉合  先膨脹再侵蝕 =&gt;盡量完善圓周</c>
+<l>            closing_circle (region, regionClosing1, 100)</l>
+<c>            </c>
+<c>            **region 切開</c>
+<l>            connection (regionClosing1, connectedRegions)</l>
+<c>            </c>
+<c>            **找尋球面積(上下限)</c>
+<l>            select_shape (connectedRegions, selectedRegions, 'area', 'and', 10000, 999999)</l>
+<c>            </c>
+<c>            **找出區域的中心座標與面積</c>
+<l>            area_center (selectedRegions, area, row, column)</l>
+<c>            </c>
+<c>            **圈出矩形</c>
+<l>            gen_rectangle1 (rectangle1, row-(size*0.5), column-(size*0.5), row+(size*0.5), column+(size*0.5))</l>
+<c>            </c>
+<c>            **與原圖取交集</c>
+<l>            reduce_domain (imageRaw, rectangle1, imageReduced)</l>
+<c>            </c>
+<c>            **輸出新的裁切圖</c>
+<l>            crop_domain (imageReduced, imagePart)</l>
+<l>            dev_clear_window ()</l>
+<l>            dev_display (imagePart)</l>
+<l>            get_image_size (imagePart, width, height)</l>
+<l>            saveName:=saveDirectory+'\\'+fileName+'\\'+indexClass+'_'+indexImage+'.jpg'</l>
+<l>            write_image (imagePart,'jpeg',0,saveDirectory+'\\'+fileName+'\\'+indexClass+'_'+indexImage+'.jpg')</l>
+<c>            </c>
+<c>            **stop ()</c>
+<c>            **area_center (RegionClosing1, Area, Row, Column)</c>
+<c>            </c>
+<c>            **dev_display (imageRaw)</c>
+<c>            **gen_circle (Circle, Row, Column, 100.5)</c>
+<c>           ** gen_circle_contour_xld (ContCircle, Row, Column, 100, 0, 6.28318, 'positive', 1)</c>
+<c>            </c>
+<c>      </c>
+<c>            **找球</c>
+<c>            **rgb1_to_gray (imageRaw, imageGray)</c>
+<c>            **二質化</c>
+<c>            **threshold (imageGray,imageThread,grayMin,grayMax)</c>
+<c>            **開閉</c>
+<c>            **fill_up (imageThread, RegionFillUp)</c>
+<c>            **de</c>
+<c>            **closing (RegionFillUp, RegionFillUp, RegionClosing)</c>
+<l>        endfor</l>
+<l>    endif   </l>
+<l>endfor</l>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>

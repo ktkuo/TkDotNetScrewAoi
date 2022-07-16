@@ -10,7 +10,7 @@ using System.IO.Ports;
 
 namespace TkDotNetScrewAoi.control
 {
-    public enum enumSerialPortStatus
+    public enum ENUM_SerialPortStatus
     {
         INIT,
         OPEN,
@@ -22,7 +22,7 @@ namespace TkDotNetScrewAoi.control
     public class SerialPorts
     {
         private SerialPort comlPort;
-        public enumSerialPortStatus SerialPortStatus=enumSerialPortStatus.INIT;
+        public ENUM_SerialPortStatus enumSerialPortStatus = ENUM_SerialPortStatus.INIT;
 
         private bool isPortOpen_;
         private bool isPortRead_;
@@ -45,7 +45,7 @@ namespace TkDotNetScrewAoi.control
                 {
                     comlPort = new SerialPort();
                 }
-                else if (SerialPortStatus == enumSerialPortStatus.INIT)
+                else if (enumSerialPortStatus == ENUM_SerialPortStatus.INIT)
                 {
                     comlPort.Dispose();
                     comlPort = null;
@@ -69,7 +69,7 @@ namespace TkDotNetScrewAoi.control
                 comlPort.Parity = Parity.None;
                 comlPort.StopBits = StopBits.One;
                 comlPort.Open();
-                SerialPortStatus = enumSerialPortStatus.OPEN;
+                enumSerialPortStatus = ENUM_SerialPortStatus.OPEN;
                 isPortRead_=true;
             }
             catch(Exception ex)
