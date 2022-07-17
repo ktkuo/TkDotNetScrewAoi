@@ -48,8 +48,8 @@ namespace TkDotNetScrewAoi.module
         private ENUM_InspectionMode enumInspectionMode_ = ENUM_InspectionMode.INSPECT;
         public ENUM_InspectionMode enumInspectionMode { get; set; }
 
-        private int numberImageLoadTune_=0;
-        private int currentImageTune_ = 0;
+        private int numberImageLoadTune_=0;//總照片數
+        private int currentImageTune_ = 0;//當前照片
         public int currentImageTune
         {
             get { return currentImageTune_; }
@@ -93,12 +93,12 @@ namespace TkDotNetScrewAoi.module
         Object lockSaveImage =new object();
         Object lockImage2Bit =new object();
 
-        int numberImagePerCcd = 6;
-        int numberImageCcd1 = 0;
-        int numberImageCcd2 = 0;
-
-        
-        public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(5,5);
+        int numberImagePerCcd = 6; //單次拍攝照片數
+        int numberImageCcd1 = 0;//拍到第幾張
+        int numberImageCcd2 = 0;//拍到第幾張        
+        int scepterflag = 0;//權杖
+        public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(5,5);//存圖矩陣
+        public int[,] memoryLength = new int[5, 5];//長度資訊 
 
         private void OnReceiveImgCcd1(object sender, ImageReceiveArgs e)
         {
@@ -342,12 +342,14 @@ namespace TkDotNetScrewAoi.module
 
         public void ImageBall2Stream()
         {
-            int memory = 0;
+            //TODO 權杖
+            scepterflag = 0;
             Bitmap bitmap1,bitmap2, bitmap3, bitmap4;
             while (true)
             {
                 if(queueImageRoi1.TryDequeue(out bitmap1)) 
-                { 
+                {
+                    
                 }                   
                 if (queueImageRoi2.TryDequeue(out bitmap2))
                 {
@@ -358,11 +360,10 @@ namespace TkDotNetScrewAoi.module
                 if(queueImageRoi4.TryDequeue(out bitmap4)) 
                 {
                 }
-                if(memory<5)
-                    memory++;
+                if(scepterflag < 5)
+                    scepterflag++;
                 else
-                    memory= 0;
-
+                    scepterflag = 0;
             }
         }        
 

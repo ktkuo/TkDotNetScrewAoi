@@ -48,16 +48,18 @@ namespace TkDotNetScrewAoi.module
             return memoryStream;
         }
 
-        public int Write(MemoryStream memoryStream_, Bitmap bitmap_, string fileName)
+        public string Write(Bitmap bitmap_, int xfileName,int yfileName)
         {
-            bitmap_.Save(memoryStream_, System.Drawing.Imaging.ImageFormat.Jpeg);
-            byte[] bytes = memoryStream_.GetBuffer();  //byte[]   bytes=   ms.ToArray(); 
-            memoryStream_.Close();
-            var mmf = MemoryMappedFile.CreateOrOpen(fileName, bytes.Length, MemoryMappedFileAccess.ReadWrite);
+            string fileName_ = xfileName.ToString() + "_" + yfileName.ToString();
+            bitmap_.Save(memoryStreams[xfileName,yfileName], System.Drawing.Imaging.ImageFormat.Jpeg);
+            byte[] bytes = memoryStreams[xfileName, yfileName].GetBuffer();  //byte[]   bytes=   ms.ToArray(); 
+            memoryStreams[xfileName, yfileName].Close();
+            var mmf = MemoryMappedFile.CreateOrOpen(fileName_, bytes.Length, MemoryMappedFileAccess.ReadWrite);
             var viewAccessor = mmf.CreateViewAccessor(0, bytes.Length);
             viewAccessor.Write(0, bytes.Length); ;
             viewAccessor.WriteArray<byte>(0, bytes, 0, bytes.Length);
-            return bytes.Length;
+            string s= fileName_ + ":"+ bytes.Length.ToString();
+            return s;
             //HttpGet("http://127.0.0.1:8000/read_image/test1/" + bytes.Length.ToString()); 
             //TODO  POST "test1" LENGTH             
         }

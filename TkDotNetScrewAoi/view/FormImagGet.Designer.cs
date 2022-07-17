@@ -40,6 +40,7 @@
             this.hWControl_Ball2 = new HalconDotNet.HWindowControl();
             this.hWControl_Roi2 = new HalconDotNet.HWindowControl();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.btn_test = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
             this.label_numberImage = new System.Windows.Forms.Label();
             this.btn_ImageChange = new System.Windows.Forms.Button();
@@ -54,7 +55,6 @@
             this.btn_CcdConnect = new System.Windows.Forms.Button();
             this.btn_ImageSave = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.btn_test = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel4.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -212,6 +212,16 @@
             this.panel2.Size = new System.Drawing.Size(1257, 153);
             this.panel2.TabIndex = 1;
             // 
+            // btn_test
+            // 
+            this.btn_test.Location = new System.Drawing.Point(532, 48);
+            this.btn_test.Name = "btn_test";
+            this.btn_test.Size = new System.Drawing.Size(104, 39);
+            this.btn_test.TabIndex = 6;
+            this.btn_test.Text = "測試";
+            this.btn_test.UseVisualStyleBackColor = true;
+            this.btn_test.Click += new System.EventHandler(this.btn_test_Click);
+            // 
             // panel5
             // 
             this.panel5.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
@@ -348,7 +358,7 @@
             // 
             // btn_CcdConnect
             // 
-            this.btn_CcdConnect.Location = new System.Drawing.Point(303, 50);
+            this.btn_CcdConnect.Location = new System.Drawing.Point(303, 55);
             this.btn_CcdConnect.Name = "btn_CcdConnect";
             this.btn_CcdConnect.Size = new System.Drawing.Size(214, 36);
             this.btn_CcdConnect.TabIndex = 1;
@@ -373,16 +383,6 @@
             this.statusStrip1.Size = new System.Drawing.Size(1281, 22);
             this.statusStrip1.TabIndex = 2;
             this.statusStrip1.Text = "statusStrip1";
-            // 
-            // btn_test
-            // 
-            this.btn_test.Location = new System.Drawing.Point(532, 48);
-            this.btn_test.Name = "btn_test";
-            this.btn_test.Size = new System.Drawing.Size(104, 39);
-            this.btn_test.TabIndex = 6;
-            this.btn_test.Text = "測試";
-            this.btn_test.UseVisualStyleBackColor = true;
-            this.btn_test.Click += new System.EventHandler(this.btn_test_Click);
             // 
             // FormImagGet
             // 

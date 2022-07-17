@@ -55,7 +55,6 @@ namespace TkDotNetScrewAoi.module
 
         public static Random random = new Random();//隨機函數
 
-
         public static HObject RoiRegion(HObject ho_imageRaw, HTuple roiX, HTuple roiY,HTuple roiSize)
         {
             HObject ho_rectangle1, ho_imageReduced, ho_imagePart=null;
