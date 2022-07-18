@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<hdevelop file_version="1.0" halcon_version="11.0.2" cs="3759651016">
+<hdevelop file_version="1.0" halcon_version="11.0.2" cs="3298537098">
 <procedure name="main">
 <interface/>
 <body>
 <c>**20220716 星宏 冠廷 輸出版本 </c>
 <c>**遍歷文件</c>
-<l>list_files ('D:/00_ProgramRepository/04TkDotNetAoiScrewType/TkDotNetScrewAoi/TkDotNetScrewAoi/imagesTunes', ['directories'], classFiles)</l>
+<l>list_files ('//192.168.3.190/TK_Quality/03_天工圖庫(僅供冠廷編輯與操作)/04_20220704_1p2mm/01Data/1.2mm OK珠', ['directories'], classFiles)</l>
 <l>saveDirectory:='D:/00_ProgramRepository/04TkDotNetAoiScrewType/TkDotNetScrewAoi/TkDotNetScrewAoi/imageComplete'</l>
 <l>fileName:='01_dataclassifiy'</l>
 <l>size:=500</l>

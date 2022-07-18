@@ -1,0 +1,92 @@
+**20220716 星宏 冠廷 輸出版本 
+**遍歷文件
+list_files ('//192.168.3.190/TK_Quality/03_天工圖庫(僅供冠廷編輯與操作)/04_20220704_1p2mm/01Data/1.2mm OK珠', ['directories'], classFiles)
+saveDirectory:='D:/00_ProgramRepository/04TkDotNetAoiScrewType/TkDotNetScrewAoi/TkDotNetScrewAoi/imageComplete'
+fileName:='01_dataclassifiy'
+size:=500
+grayMin:=70
+grayMax:=90
+**文件路徑分類
+for indexClass := 0 to |classFiles|-1 by 1
+ 
+    **各標籤路徑
+    path:=classFiles[indexClass]
+    **各圖像路徑
+    list_files (path,['files','follow_links'],imageLoadList)
+    if(|imageLoadList|>0)
+        for indexImage:=0 to |imageLoadList|-1 by 1
+            **拆解檔名
+            parse_filename (imageLoadList[indexImage], baseName, extension, directory)
+            
+            **關聯料夾是否存在
+            file_exists(saveDirectory+'\\'+fileName, fileExists)
+            
+            **無存在21
+            if(fileExists<1)
+                **創建資料夾
+                make_dir (saveDirectory+'\\'+fileName)
+            endif
+            
+            **讀圖            
+            read_image (imageRaw, imageLoadList[indexImage])
+            
+            **取導數  可找邊緣
+            **http://www.ihalcon.com/read-2139.html
+            sobel_amp (imageRaw, edgeAmplitude1, 'sum_abs', 9)
+            
+            **gray_range_rect (imageRaw, ImageResult, 11, 11)
+            
+            **強化  單點像素 與 全圖像素之平均 加大 黑更黑 白更白
+            **res := round((orig - mean) * Factor) + orig
+            emphasize (edgeAmplitude1, imageEmphasize, 12, 12, 4)
+            
+            **通常強化後，需要去躁點            
+            mean_image (edgeAmplitude1, imageMean, 4, 4)
+            **二質化
+            threshold (imageMean, region, 12, 44)
+            
+            **閉合  先膨脹再侵蝕 =>盡量完善圓周
+            closing_circle (region, regionClosing1, 100)
+            
+            **region 切開
+            connection (regionClosing1, connectedRegions)
+            
+            **找尋球面積(上下限)
+            select_shape (connectedRegions, selectedRegions, 'area', 'and', 10000, 999999)
+            
+            **找出區域的中心座標與面積
+            area_center (selectedRegions, area, row, column)
+            
+            **圈出矩形
+            gen_rectangle1 (rectangle1, row-(size*0.5), column-(size*0.5), row+(size*0.5), column+(size*0.5))
+            
+            **與原圖取交集
+            reduce_domain (imageRaw, rectangle1, imageReduced)
+            
+            **輸出新的裁切圖
+            crop_domain (imageReduced, imagePart)
+            dev_clear_window ()
+            dev_display (imagePart)
+            get_image_size (imagePart, width, height)
+            saveName:=saveDirectory+'\\'+fileName+'\\'+indexClass+'_'+indexImage+'.jpg'
+            write_image (imagePart,'jpeg',0,saveDirectory+'\\'+fileName+'\\'+indexClass+'_'+indexImage+'.jpg')
+            
+            **stop ()
+            **area_center (RegionClosing1, Area, Row, Column)
+            
+            **dev_display (imageRaw)
+            **gen_circle (Circle, Row, Column, 100.5)
+           ** gen_circle_contour_xld (ContCircle, Row, Column, 100, 0, 6.28318, 'positive', 1)
+            
+      
+            **找球
+            **rgb1_to_gray (imageRaw, imageGray)
+            **二質化
+            **threshold (imageGray,imageThread,grayMin,grayMax)
+            **開閉
+            **fill_up (imageThread, RegionFillUp)
+            **de
+            **closing (RegionFillUp, RegionFillUp, RegionClosing)
+        endfor
+    endif   
+endfor

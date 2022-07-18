@@ -111,26 +111,20 @@ namespace TkDotNetScrewAoi.cameras
         public ENUM_ImageSaveMode enumImageSaveMode = ENUM_ImageSaveMode.INIT;        
         public HObject imageGet=null;
         public int IntervalGrab=20; //取像週期
-
         private string nameCcd_= "MachineVision:7K0108EPAK00004";
         public string NameCcd { get { return nameCcd_; } set { nameCcd_ = value; } }
-
         private bool isTrigger_= false;//硬體觸發
         private bool isGrabWaitForNextGroup_ = false;//6張相片
-        private bool isTesting_ = true;
+        private bool isTesting_ = false;
         public bool isTesting { get { return isTesting_; } set { isTesting_ = value; } }
-
         public bool isTrigger { get { return isTrigger_; } set { isTrigger_ = value; } }
         public bool isGrabWaitForNextGroup { get { return isGrabWaitForNextGroup_; } set { isGrabWaitForNextGroup_ = value; } }
-
         private double exposureTime_ = 1800;
         public double exposureTime { get { return exposureTime_; } set { exposureTime_ = value; } }
-
         public ConcurrentQueue<HObject> queueImageTrans = new ConcurrentQueue<HObject>();//圖片傳輸
         public ConcurrentQueue<HObject> queueImageSave = new ConcurrentQueue<HObject>();//圖片儲存
         HalconDotNet.HWindowControl[] hWindowControlsRois, hWindowControlsBalls;
         private ENUM_CcdNumber enumCcdNumber;
-
 
         public CameraOptHalcon(HalconDotNet.HWindowControl[] hWindowControlsRois_, HalconDotNet.HWindowControl[] hWindowControlsBalls_, ENUM_CcdNumber enumCcdNumber_)
         {
@@ -260,16 +254,11 @@ namespace TkDotNetScrewAoi.cameras
                         {
                             if (this.enumCameraState == ENUM_CameraState.OPEN_TRIGGER || this.enumCameraState == ENUM_CameraState.OPEN_NOTRIGGER)
                             {
-                                if (true)//false:!this.isGrabWaitForNextGroup
-                                {
-                                    //HOperatorSet.GrabImageAsync(out hoImage_, hv_AcqHandle, -1);
-                                    HOperatorSet.ReadImage(out hoImage_, @"D:\\00_ProgramRepository\\04TkDotNetAoiScrewType\\TkDotNetScrewAoi\\TkDotNetScrewAoi\\imagesTunes\\2022-07-16\\1\\1_1.bmp"); //*讀圖
-                                    OnReceiveImg?.Invoke(this, new ImageReceiveArgs(hoImage_));//只要相機開著就持續取像 送出影像
-                                    HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber].HalconWindow);
-                                    //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber +1].HalconWindow);
-                                }else
-                                {
-                                }
+                                //HOperatorSet.GrabImageAsync(out hoImage_, hv_AcqHandle, -1);                                    
+                                HOperatorSet.ReadImage(out hoImage_, @"D:\\00_ProgramRepository\\04TkDotNetAoiScrewType\\TkDotNetScrewAoi\\TkDotNetScrewAoi\\imagesTunes\\2022-07-16\\1\\1_1.bmp"); //*讀圖                                    
+                                OnReceiveImg?.Invoke(this, new ImageReceiveArgs(hoImage_));//只要相機開著就持續取像 送出影像                                    
+                                HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber].HalconWindow);                                    
+                                //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber +1].HalconWindow);
                                 Thread.Sleep(1);
                                 //Thread.Sleep(IntervalGrab);//取樣週期
                                 //HTuple ww, hh; HOperatorSet.GetImageSize(hoImage_,out ww ,out hh);Console.WriteLine(ww.D.ToString()+","+hh.D.ToString());

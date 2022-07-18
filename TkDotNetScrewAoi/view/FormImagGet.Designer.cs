@@ -55,6 +55,7 @@
             this.btn_CcdConnect = new System.Windows.Forms.Button();
             this.btn_ImageSave = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.button1 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel4.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -200,6 +201,7 @@
             // 
             this.panel2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel2.Controls.Add(this.button1);
             this.panel2.Controls.Add(this.btn_test);
             this.panel2.Controls.Add(this.panel5);
             this.panel2.Controls.Add(this.radioButton_Software);
@@ -384,6 +386,16 @@
             this.statusStrip1.TabIndex = 2;
             this.statusStrip1.Text = "statusStrip1";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(642, 48);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(104, 39);
+            this.button1.TabIndex = 7;
+            this.button1.Text = "測試";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // FormImagGet
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
@@ -436,5 +448,6 @@
         private System.Windows.Forms.Label label_numberImage;
         private System.Windows.Forms.Button btn_ImageChange;
         private System.Windows.Forms.Button btn_test;
+        private System.Windows.Forms.Button button1;
     }
 }

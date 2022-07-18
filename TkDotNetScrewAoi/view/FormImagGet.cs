@@ -11,6 +11,16 @@ using HalconDotNet;
 using TkDotNetScrewAoi.cameras;
 using TkDotNetScrewAoi.module;
 using TkDotNetScrewAoi.control;
+using System.Threading;
+using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Sockets;
+using System.IO;
+using System.Drawing.Imaging;
+using System.Diagnostics;
+using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
+using System.Collections.Specialized;
 
 namespace TkDotNetScrewAoi.view
 {
@@ -40,7 +50,7 @@ namespace TkDotNetScrewAoi.view
             {
                 inspectionScrewType.enumInspectionMode = module.ENUM_InspectionMode.INSPECT;
                 if (!inspectionScrewType.isInspectionRun)
-                    inspectionScrewType.Run();
+                    inspectionScrewType.Start();
                 else
                     inspectionScrewType.Stop();
                 inspectionScrewType.isInspectionRun = !inspectionScrewType.isInspectionRun;
@@ -145,8 +155,30 @@ namespace TkDotNetScrewAoi.view
 
         private void btn_test_Click(object sender, EventArgs e)
         {
-            //inspectionScrewType.imageMemoryStreams.Write(inspectionScrewType.imageMemoryStreams.memoryStreams[0,1],);
-            //inspectionScrewType.imageMemoryStreams.MemoryStreamRest();
+            List<string> ints = new List<string>(new string[24]);
+            Console.WriteLine(ints.Count.ToString());
+            
+            for(int i = 0; i < 24; i++)
+            {
+                int jj = (int)(i / 2);
+                ints[jj]= i.ToString();
+                Console.WriteLine("["+jj.ToString()+","+i.ToString()+"]");
+            }
+            Console.WriteLine("比對");
+            Console.WriteLine(ints.Count.ToString());
+            for (int i = 0; i < 24; i++)
+            {
+                if (ints.Any())
+                {
+                    Console.WriteLine(ints[i].ToString());
+                }                
+            }
+        }
+
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            string ss= await inspectionScrewType.imageMemoryStreams.HttpGet("http://192.168.3.157:8000/makePredictionBatch/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24");
+            Console.WriteLine(ss);
         }
     }
 }

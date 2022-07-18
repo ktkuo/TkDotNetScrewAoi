@@ -69,7 +69,6 @@ namespace TkDotNetScrewAoi.module
         public bool isInspectionRun = false;//檢測是否啟用
         public bool isSave = false;//是否存圖
         public bool isDev=false;//是否開發者
-
         private string imagesDirDefect = string.Empty;// 瑕疵影像路徑
         private string imagesDirTune = string.Empty;// 調機影像路徑
         private Stopwatch stopwatch1 = new Stopwatch();
@@ -82,7 +81,6 @@ namespace TkDotNetScrewAoi.module
         public ConcurrentQueue<HObject> queueImageTune2 = new ConcurrentQueue<HObject>();//Tune2
         public ConcurrentQueue<HObject> queueImageTune3 = new ConcurrentQueue<HObject>();//Tune3
         public ConcurrentQueue<HObject> queueImageTune4 = new ConcurrentQueue<HObject>();//Tune4
-
         public ConcurrentQueue<HObject> queueImageCcd1= new ConcurrentQueue<HObject>();//Ccd1
         public ConcurrentQueue<HObject> queueImageCcd2 = new ConcurrentQueue<HObject>();//Ccd2
         public ConcurrentQueue<Bitmap> queueImageRoi1 = new ConcurrentQueue<Bitmap>();//Roi1
@@ -97,25 +95,27 @@ namespace TkDotNetScrewAoi.module
         int numberImageCcd1 = 0;//拍到第幾張
         int numberImageCcd2 = 0;//拍到第幾張        
         int scepterflag = 0;//權杖
-        public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(5,5);//存圖矩陣
-        public int[,] memoryLength = new int[5, 5];//長度資訊 
+        public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(24);//存圖 陣列 24圖
+        public int[] memoryLength = new int[24];//長度
+        private bool isCcd1Over = false,isCcd2Over=false
+            , isImageComplete=false;//相片是否完整
 
+        private string pathSvae_ = @"//image";
+        public string pathSvae { get; set; }
         private void OnReceiveImgCcd1(object sender, ImageReceiveArgs e)
         {
             if (numberImageCcd1< numberImagePerCcd)
             {
-                stopwatch1.Restart();
-                queueImageCcd1.Enqueue(e.image.Clone());
+                queueImageCcd1.Enqueue(e.image.Clone());//CCD 照片
                 numberImageCcd1++;
-            }
+            }            
         }
         private void OnReceiveImgCcd2(object sender, ImageReceiveArgs e)
         {
             if (numberImageCcd2 < numberImagePerCcd)
-            {                
-                queueImageCcd2.Enqueue(e.image.Clone());
+            {
+                queueImageCcd2.Enqueue(e.image.Clone());//CCD 照片
                 numberImageCcd2++;
-                Console.WriteLine(numberImageCcd2.ToString());
             }
         }
 
@@ -137,14 +137,13 @@ namespace TkDotNetScrewAoi.module
                 HOperatorSet.SetColor(displayInspect_.hWindowRois[i].HalconWindow, "red");                
                 HOperatorSet.SetColor(displayInspect_.hWindowBalls[i].HalconWindow, "red");
                 HOperatorSet.SetPart(displayInspect_.hWindowBalls[i].HalconWindow, 0,0,500,500);
-            }
-            
+            }            
             this.displayInspect = displayInspect_;
             this.Ccd1 =new CameraOptHalcon(displayInspect_.hWindowRois, displayInspect_.hWindowBalls,ENUM_CcdNumber.SECOND);
             this.Ccd2 =new CameraOptHalcon(displayInspect_.hWindowRois, displayInspect_.hWindowBalls, ENUM_CcdNumber.SECOND);
             this.Ccd1.OnReceiveImg+= new EventHandler<ImageReceiveArgs>(OnReceiveImgCcd1);
             this.Ccd2.OnReceiveImg+=new EventHandler<ImageReceiveArgs>(OnReceiveImgCcd2);
-            isStream=true;
+            isStream=true;//使用串流
         }
 
         ~Inspection()
@@ -152,18 +151,152 @@ namespace TkDotNetScrewAoi.module
             InspectionDispose();
         }
 
-        public void Run()
+        public void Start()
         {
+            this.Ccd1.Open();
+            this.Ccd2.Open();
             //TODO CCD2 OPEN()
             if (Ccd1.enumGrabState != ENUM_GrabState.RUN)
             {
-                Task.Run(new Action(() =>
+                Task.Run(async () =>
                 {
-                    ImageCcd1QueueBuffer();
-                    ImageCcd2QueueBuffer();
-                }));
-                this.Ccd1.Open();  
-                //this.Ccd2.Open();
+                    HObject hObject1_, hObject2_;
+                    List<HObject> hImages_ = new List<HObject>(new HObject[24]);//張相片
+                    int numberImage = 0;
+                    while (isInspectionRun)//是否檢測流程
+                    {                        
+                        if (true || numberImageCcd1 == numberImagePerCcd && numberImageCcd2==numberImagePerCcd)//兩隻相機集滿12張
+                        {                            
+                            /*啟動前處理流程*/                            
+                            for (int i = 0; i < 12; i++)//12張相片
+                            {
+                                if (i<6)
+                                {
+                                    if (queueImageCcd1.TryDequeue(out hObject1_))
+                                    {
+                                        //(X,Y,SIZE)
+                                        hImages_[i]   = await Algorithm.RoiRegion(hObject1_, 400, 800, 500);//將相機照片切為2個ROI-1
+                                        hImages_[i+6] = await Algorithm.RoiRegion(hObject1_, 400, 800, 500);//將相機照片切為2個ROI-2
+                                        numberImage++;
+                                    }
+                                }
+                                else
+                                {
+                                    if (queueImageCcd2.TryDequeue(out hObject2_))
+                                    {
+                                        //(X,Y,SIZE)
+                                        hImages_[i+6]  = await Algorithm.RoiRegion(hObject2_, 400, 800, 500);//將相機照片切為2個ROI-1
+                                        hImages_[i+12] = await Algorithm.RoiRegion(hObject2_, 400, 800, 500);//將相機照片切為2個ROI-2
+                                        numberImage++;
+                                    }
+                                }
+                            }
+
+                            if (numberImage==12)//所有相片不為空
+                            {
+                                Console.WriteLine("24張相片集滿");
+                                isImageComplete = true;
+                            }
+                            else
+                            {
+                                Console.WriteLine("相片缺失");
+                                isImageComplete = false;
+                            }
+                            /*1~24*/
+                            if (isImageComplete)
+                            {
+                                var task1 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[0], 0, 0, false, pathSvae);
+                                var task2 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[1], 0, 0, false, pathSvae);
+                                var task3 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[2], 0, 0, false, pathSvae);
+                                var task4 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[3], 0, 0, false, pathSvae);
+                                var task5 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[4], 0, 0, false, pathSvae);
+                                var task6 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[5], 0, 0, false, pathSvae);
+                                var task7 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[6], 0, 0, false, pathSvae);
+                                var task8 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[7], 0, 0, false, pathSvae);
+                                var task9 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[8], 0, 0, false, pathSvae);
+                                var task10 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[9], 0, 0, false, pathSvae);
+                                var task11 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[10], 0, 0, false, pathSvae);
+                                var task12 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[11], 0, 0, false, pathSvae);
+                                var task13 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[12], 0, 0, false, pathSvae);
+                                var task14 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[13], 0, 0, false, pathSvae);
+                                var task15 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[14], 0, 0, false, pathSvae);
+                                var task16 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[15], 0, 0, false, pathSvae);
+                                var task17 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[16], 0, 0, false, pathSvae);
+                                var task18 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[17], 0, 0, false, pathSvae);
+                                var task19 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[18], 0, 0, false, pathSvae);
+                                var task20 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[19], 0, 0, false, pathSvae);
+                                var task21 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[20], 0, 0, false, pathSvae);
+                                var task22 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[21], 0, 0, false, pathSvae);
+                                var task23 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[22], 0, 0, false, pathSvae);
+                                var task24 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowRois[0], hImages_[23], 0, 0, false, pathSvae);
+                                await Task.WhenAll(task1,task2,task3,task4,task5,task6,task7,task8,task9,task10
+                                    ,task11,task12,task13,task14,task15,task16,task17,task18,task19,task20
+                                    ,task21,task22,task23,task24);
+                                var taskStream1 = imageMemoryStreams.Write( task1.Result     ,0);
+                                var taskStream2 = imageMemoryStreams.Write( task2.Result     ,1);
+                                var taskStream3 = imageMemoryStreams.Write( task3.Result     ,2);
+                                var taskStream4 = imageMemoryStreams.Write( task4.Result     ,3);
+                                var taskStream5 = imageMemoryStreams.Write( task5.Result     ,4);
+                                var taskStream6 = imageMemoryStreams.Write( task6.Result     ,5);
+                                var taskStream7 = imageMemoryStreams.Write( task7.Result     ,6);
+                                var taskStream8 = imageMemoryStreams.Write( task8.Result     ,7);
+                                var taskStream9 = imageMemoryStreams.Write( task9.Result     ,8);
+                                var taskStream10 = imageMemoryStreams.Write(task10.Result    ,9);
+                                var taskStream11 = imageMemoryStreams.Write(task11.Result    ,10);
+                                var taskStream12 = imageMemoryStreams.Write(task12.Result    ,11);
+                                var taskStream13 = imageMemoryStreams.Write(task13.Result    ,12);
+                                var taskStream14 = imageMemoryStreams.Write(task14.Result    ,13);
+                                var taskStream15 = imageMemoryStreams.Write(task15.Result    ,14);
+                                var taskStream16 = imageMemoryStreams.Write(task16.Result    ,15);
+                                var taskStream17 = imageMemoryStreams.Write(task17.Result    ,16);
+                                var taskStream18 = imageMemoryStreams.Write(task18.Result    ,17);
+                                var taskStream19 = imageMemoryStreams.Write(task19.Result    ,18);
+                                var taskStream20 = imageMemoryStreams.Write(task20.Result    ,19);
+                                var taskStream21= imageMemoryStreams.Write( task21.Result    ,20);
+                                var taskStream22= imageMemoryStreams.Write( task22.Result    ,21);
+                                var taskStream23= imageMemoryStreams.Write( task23.Result    ,22);
+                                var taskStream24= imageMemoryStreams.Write( task24.Result    ,23);
+                                await Task.WhenAll(taskStream1, taskStream2, taskStream3, taskStream4, taskStream5, taskStream6, taskStream7,
+                                    taskStream8, taskStream9, taskStream10, taskStream11, taskStream12, taskStream13, taskStream14, taskStream15, taskStream16
+                                    , taskStream17, taskStream18, taskStream19, taskStream20, taskStream21, taskStream22, taskStream23, taskStream24);
+                                string[] requestLength = new string[] { 
+                                    taskStream1.Result, taskStream2.Result, taskStream3.Result, taskStream4.Result, taskStream5.Result,
+                                    taskStream6.Result, taskStream7.Result, taskStream8.Result, taskStream9.Result,
+                                    taskStream10.Result, taskStream11.Result, taskStream12.Result, taskStream13.Result,
+                                    taskStream14.Result,taskStream15.Result,taskStream16.Result,taskStream17.Result,taskStream18.Result,taskStream19.Result,taskStream20.Result,
+                                    taskStream21.Result, taskStream22.Result, taskStream23.Result, taskStream24.Result};
+                                await imageMemoryStreams.HttpGet("http:/127.0.0.1:8000/makePredictionBatch/" +
+                                    taskStream1.Result+"/"+
+                                    taskStream2.Result + "/" +
+                                    taskStream3.Result + "/" +
+                                    taskStream4.Result + "/" +
+                                    taskStream5.Result + "/" +
+                                    taskStream6.Result + "/" +
+                                    taskStream7.Result + "/" +
+                                    taskStream8.Result + "/" +
+                                    taskStream9.Result + "/" +
+                                    taskStream10.Result + "/" +
+                                    taskStream11.Result + "/" +
+                                    taskStream12.Result + "/" +
+                                    taskStream13.Result + "/" +
+                                    taskStream14.Result + "/" +
+                                    taskStream15.Result + "/" +
+                                    taskStream16.Result + "/" +
+                                    taskStream17.Result + "/" +
+                                    taskStream18.Result + "/" +
+                                    taskStream19.Result + "/" +
+                                    taskStream20.Result + "/" +
+                                    taskStream21.Result + "/" +
+                                    taskStream22.Result + "/" +
+                                    taskStream23.Result + "/" +
+                                    taskStream24.Result + "/"
+                                    );
+                            }
+                            
+                        }
+                    }
+                });
+                
             }                                   
             else                   
             {                    
@@ -173,12 +306,12 @@ namespace TkDotNetScrewAoi.module
 
         public void Stop()
         {
-            if (Ccd1.enumGrabState == ENUM_GrabState.RUN)
+            if (Ccd1.enumGrabState == ENUM_GrabState.RUN)//關閉相機流程
             {
                 this.Ccd1.enumGrabState = ENUM_GrabState.STOP;
                 while (true)
                 {
-                    if (this.Ccd1.enumCameraState == ENUM_CameraState.CLOSE)
+                    if (this.Ccd1.enumCameraState == ENUM_CameraState.CLOSE)//關閉相機
                         break;
                 }
                 InspectionDispose();
@@ -189,10 +322,13 @@ namespace TkDotNetScrewAoi.module
             }
         }
        
+        /// <summary>
+        /// 開發者模式
+        /// </summary>
         public void Dev()
         {
             HTuple hv_fileName = "/01_dataclassifiy";//圖像標籤
-            HTuple hv_saveDirectory = "D:/00_ProgramRepository/04TkDotNetAoiScrewType/TkDotNetScrewAoi/TkDotNetScrewAoi/imageTuneComplete"+ hv_fileName;//存圖路徑
+            HTuple hv_saveDirectory = "\\192.168.3.190\\TK_Quality\\03_天工圖庫(僅供冠廷編輯與操作)\\04_20220704_1p2mm\\01Data\\" + hv_fileName;//存圖路徑
             Task.Run(new Action(() => { ImageDip(stopwatch1,1, queueImageTune1, displayInspect.hWindowRois[0], displayInspect.hWindowBalls[0],hv_saveDirectory); }));
             Task.Run(new Action(() => { ImageDip(stopwatch2,2, queueImageTune2, displayInspect.hWindowRois[1], displayInspect.hWindowBalls[1], hv_saveDirectory ); }));
             Task.Run(new Action(() => { ImageDip(stopwatch3,3, queueImageTune3, displayInspect.hWindowRois[2], displayInspect.hWindowBalls[2], hv_saveDirectory ); }));
@@ -211,6 +347,7 @@ namespace TkDotNetScrewAoi.module
                 hv_indexClass = (int)hv_indexClass + 1)
             {
                 hv_path = hv_classFiles.TupleSelect(hv_indexClass);
+                hv_path= "\\192.168.3.190\\TK_Quality\\03_天工圖庫(僅供冠廷編輯與操作)\\04_20220704_1p2mm\\01Data\\1.2mm OK珠\\";
                 HOperatorSet.ListFiles(hv_path, (new HTuple("files")).TupleConcat("follow_links"), out hv_imageLoadList);
                 numberImageLoadTune_=hv_imageLoadList.TupleLength();
                 if ((int)(new HTuple((new HTuple(hv_imageLoadList.TupleLength())).TupleGreater(0))) != 0)
@@ -244,129 +381,21 @@ namespace TkDotNetScrewAoi.module
             displayInspect.buttonRun.BeginInvoke(new Action(() => {displayInspect.buttonRun.Enabled=true; Console.WriteLine("調機完成"); }));
         }
 
-        public void ImageDip(Stopwatch stopwatch,int sq,ConcurrentQueue<HObject> queues,HWindowControl hWindowControlRoi_, HWindowControl hWindowControlBall_,string path_)
+        public async void ImageDip(Stopwatch stopwatch,int sq,ConcurrentQueue<HObject> queues,HWindowControl hWindowControlRoi_, HWindowControl hWindowControlBall_,string path_)
         {
             HObject image_;
             while (true)
             {
                 if (!queues.IsEmpty)
                 {
-                    stopwatch.Restart();
                     queues.TryDequeue(out image_);
-                    Algorithm.GetBall(enumInspectionMode, lockSaveImage,hWindowControlBall_, image_,0,0,isSave, path_);
+                    await Algorithm.GetBall(enumInspectionMode, lockSaveImage,hWindowControlBall_, image_,0,0,isSave, path_);
                     //HOperatorSet.DispObj(image_, hWindowControlRoi_.HalconWindow);
-                    stopwatch.Stop();
                 }
                 Thread.Sleep(1);
             }
         }
-
-        public void ImageCcd1QueueBuffer()
-        {
-            while (isStream)
-            {
-                if (!queueImageCcd1.IsEmpty)
-                {
-                    HObject image_;
-                    if (queueImageCcd1.TryDequeue(out image_))
-                    {
-                        HObject hObjectRoi1 = Algorithm.RoiRegion(image_, 400, 800, 500);                            
-                        HObject hObjectRoi2 = Algorithm.RoiRegion(image_, 800, 400, 500);        
-                        queueImageRoi1.Enqueue(Algorithm.Hobjet2Bitmap32(hObjectRoi1));
-                        queueImageRoi2.Enqueue(Algorithm.Hobjet2Bitmap32(hObjectRoi2));
-                        //HObject hObjectRoi1 = Algorithm.RoiRegion(image_, 400, 800, 500);
-                        //HObject hObjectRoi2 = Algorithm.RoiRegion(image_, 800, 400, 500);
-                        //HOperatorSet.DispObj(image_, displayInspect.hWindowRois[2].HalconWindow);
-                        //HOperatorSet.DispObj(image_, displayInspect.hWindowRois[3].HalconWindow);
-                        //HOperatorSet.DispObj(hObjectRoi1, displayInspect.hWindowBalls[2].HalconWindow);
-                        //HOperatorSet.DispObj(hObjectRoi2, displayInspect.hWindowBalls[3].HalconWindow);
-                        stopwatch1.Stop();
-                        
-                        Thread.Sleep(1);
-                    }
-                    else
-                    {
-                        if (numberImageCcd1 == numberImagePerCcd)
-                        {
-                            numberImageCcd1 = 0;
-                        }
-                    }
-                }
-                else
-                {
-                    stopwatch2.Stop();
-                    Console.WriteLine("圖數量: " + numberImageCcd1.ToString() + ", stopwatch1 ms :" + stopwatch1.ElapsedMilliseconds.ToString());
-                    if (numberImageCcd1 == numberImagePerCcd)
-                    {
-                        stopwatch2.Restart();
-                        numberImageCcd1 = 0;
-                    }
-                }
-            }            
-        }
-
-        public void ImageCcd2QueueBuffer()
-        {
-
-            while (isStream)
-            {
-                if (!queueImageCcd2.IsEmpty)
-                {
-                    HObject image_;
-                    if (queueImageCcd2.TryDequeue(out image_))
-                    {
-                        HObject hObjectRoi1 = Algorithm.RoiRegion(image_, 400, 800, 500);
-                        HObject hObjectRoi2 = Algorithm.RoiRegion(image_, 800, 400, 500);
-                        queueImageRoi3.Enqueue(Algorithm.Hobjet2Bitmap32(hObjectRoi1));
-                        queueImageRoi4.Enqueue(Algorithm.Hobjet2Bitmap32(hObjectRoi2));
-                        //HObject hObjectRoi1 = Algorithm.RoiRegion(image_, 400, 800, 500);
-                        //HObject hObjectRoi2 = Algorithm.RoiRegion(image_, 800, 400, 500);
-                        //HOperatorSet.DispObj(image_, displayInspect.hWindowRois[2].HalconWindow);
-                        //HOperatorSet.DispObj(image_, displayInspect.hWindowRois[3].HalconWindow);
-                        //HOperatorSet.DispObj(hObjectRoi1, displayInspect.hWindowBalls[2].HalconWindow);
-                        //HOperatorSet.DispObj(hObjectRoi2, displayInspect.hWindowBalls[3].HalconWindow);
-                        stopwatch2.Stop();
-                        Thread.Sleep(1);
-                        Console.WriteLine("stopwatch2 ms :" + stopwatch2.ElapsedMilliseconds.ToString());
-                    }
-                    else
-                    {
-                        if (numberImageCcd2 == numberImagePerCcd)
-                        {
-                            numberImageCcd2= 0;
-                        }
-                    }
-                }
-            }
-        }
-
-        public void ImageBall2Stream()
-        {
-            //TODO 權杖
-            scepterflag = 0;
-            Bitmap bitmap1,bitmap2, bitmap3, bitmap4;
-            while (true)
-            {
-                if(queueImageRoi1.TryDequeue(out bitmap1)) 
-                {
-                    
-                }                   
-                if (queueImageRoi2.TryDequeue(out bitmap2))
-                {
-                }
-                if(queueImageRoi3.TryDequeue(out bitmap3)) 
-                {
-                }
-                if(queueImageRoi4.TryDequeue(out bitmap4)) 
-                {
-                }
-                if(scepterflag < 5)
-                    scepterflag++;
-                else
-                    scepterflag = 0;
-            }
-        }        
-
+          
         public void MemoryWrite()
         {
 
@@ -379,21 +408,21 @@ namespace TkDotNetScrewAoi.module
             while (true)
             {
                 Console.WriteLine("移除所有儲列");
-                queueImageTune1.TryDequeue(out hObject_);
-                queueImageTune2.TryDequeue(out hObject_);
-                queueImageTune3.TryDequeue(out hObject_);
-                queueImageTune4.TryDequeue(out hObject_);
-                queueImageCcd1.TryDequeue(out hObject_);
-                queueImageCcd2.TryDequeue(out hObject_);
-                queueImageRoi1.TryDequeue(out bitmap_);
-                queueImageRoi2.TryDequeue(out bitmap_);
-                queueImageRoi3.TryDequeue(out bitmap_);
-                queueImageRoi4.TryDequeue(out bitmap_);
+                queueImageTune1.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageTune2.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageTune3.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageTune4.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageCcd1.TryDequeue(out hObject_);                   //InspectionDispose
+                queueImageCcd2.TryDequeue(out hObject_);                   //InspectionDispose
+                queueImageRoi1.TryDequeue(out bitmap_);                    //InspectionDispose
+                queueImageRoi2.TryDequeue(out bitmap_);                    //InspectionDispose
+                queueImageRoi3.TryDequeue(out bitmap_);                    //InspectionDispose
+                queueImageRoi4.TryDequeue(out bitmap_);                    //InspectionDispose
                 if ((
-                    queueImageRoi1.Count + queueImageRoi2.Count  + queueImageRoi3.Count  + queueImageRoi4.Count +
-                    queueImageTune1.Count+ queueImageTune2.Count + queueImageTune3.Count + queueImageTune4.Count+
-                    queueImageCcd1.Count + queueImageCcd2.Count)==0
-                    )
+                    queueImageRoi1.Count + queueImageRoi2.Count  + queueImageRoi3.Count  + queueImageRoi4.Count +   //InspectionDispose
+                    queueImageTune1.Count+ queueImageTune2.Count + queueImageTune3.Count + queueImageTune4.Count +   //InspectionDispose
+                    queueImageCcd1.Count + queueImageCcd2.Count)== 0 //InspectionDispose
+                    )//InspectionDispose
                 {
                         break;
                 }
@@ -401,14 +430,6 @@ namespace TkDotNetScrewAoi.module
             }
             GC.Collect();
             Console.WriteLine("移除所有儲列完成");
-            Console.WriteLine(
-                queueImageTune1.Count.ToString()+","+
-                    queueImageTune2.Count.ToString() + "," +
-                    queueImageTune3.Count.ToString() + "," +
-                    queueImageTune4.Count.ToString() + "," +
-                    queueImageCcd1.Count.ToString() + "," +
-                    queueImageCcd2.Count.ToString() + "," 
-                    );
         }
     }
 }
