@@ -28,9 +28,13 @@ namespace TkDotNetScrewAoi.view
     {        
         public Inspection inspectionScrewType;
         public DisplayInspection display;
+        public Sockets plc; 
+
         public FormImagGet()
         {
             InitializeComponent();
+            plc = new Sockets("192.168.0.254", 502, 8888);
+            plc.Connect();
             display = new DisplayInspection();
             this.display.hWindowRois=new HWindowControl[] { hWControl_Roi1,hWControl_Roi2,hWControl_Roi3,hWControl_Roi4 } ;
             this.display.hWindowBalls = new HWindowControl[] { hWControl_Ball1,hWControl_Ball2,hWControl_Ball3,hWControl_Ball4};
@@ -175,10 +179,14 @@ namespace TkDotNetScrewAoi.view
             }
         }
 
-        private async void button1_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)
         {
-            string ss= await inspectionScrewType.imageMemoryStreams.HttpGet("http://192.168.3.157:8000/makePredictionBatch/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24");
-            Console.WriteLine(ss);
+            //string ss= await inspectionScrewType.imageMemoryStreams.HttpGet("http://192.168.3.157:8000/makePredictionBatch/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19/20/21/22/23/24");
+
+            string ss= "{\"result\":\"@1@2@3@4@\"}";
+            string[] sArray = ss.Split('@');
+            Console.WriteLine("***"+sArray[1]+ "***" + sArray[2] + "***" + sArray[3] + "***" + sArray[4]);
+            ss.IndexOf("A").ToString();
         }
     }
 }

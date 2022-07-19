@@ -94,8 +94,9 @@ namespace TkDotNetScrewAoi.module
         int numberImagePerCcd = 6; //單次拍攝照片數
         int numberImageCcd1 = 0;//拍到第幾張
         int numberImageCcd2 = 0;//拍到第幾張        
-        int scepterflag = 0;//權杖
+        int scepterflag = 0;//權杖 /*權杖由0開始*/
         public ImageMemoryStream imageMemoryStreams = new ImageMemoryStream(24);//存圖 陣列 24圖
+        public int[,] scepterflagMatrix = new int[22, 22];
         public int[] memoryLength = new int[24];//長度
         private bool isCcd1Over = false,isCcd2Over=false
             , isImageComplete=false;//相片是否完整
@@ -259,13 +260,14 @@ namespace TkDotNetScrewAoi.module
                                 await Task.WhenAll(taskStream1, taskStream2, taskStream3, taskStream4, taskStream5, taskStream6, taskStream7,
                                     taskStream8, taskStream9, taskStream10, taskStream11, taskStream12, taskStream13, taskStream14, taskStream15, taskStream16
                                     , taskStream17, taskStream18, taskStream19, taskStream20, taskStream21, taskStream22, taskStream23, taskStream24);
+                                numberImageCcd1 = 0; numberImageCcd2 = 0;
                                 string[] requestLength = new string[] { 
                                     taskStream1.Result, taskStream2.Result, taskStream3.Result, taskStream4.Result, taskStream5.Result,
                                     taskStream6.Result, taskStream7.Result, taskStream8.Result, taskStream9.Result,
                                     taskStream10.Result, taskStream11.Result, taskStream12.Result, taskStream13.Result,
                                     taskStream14.Result,taskStream15.Result,taskStream16.Result,taskStream17.Result,taskStream18.Result,taskStream19.Result,taskStream20.Result,
                                     taskStream21.Result, taskStream22.Result, taskStream23.Result, taskStream24.Result};
-                                await imageMemoryStreams.HttpGet("http:/127.0.0.1:8000/makePredictionBatch/" +
+                                string result=await imageMemoryStreams.HttpGet("http:/127.0.0.1:8000/makePredictionBatch/" +
                                     taskStream1.Result+"/"+
                                     taskStream2.Result + "/" +
                                     taskStream3.Result + "/" +
@@ -291,10 +293,24 @@ namespace TkDotNetScrewAoi.module
                                     taskStream23.Result + "/" +
                                     taskStream24.Result + "/"
                                     );
+                                bool sort_=InspectionMatrix(scepterflag,result);
+                                if (sort_)
+                                {
+                                    //OK
+                                }
+                                else
+                                {
+                                    //NG
+                                }
+                                scepterflag++;
+                                if(scepterflag == 22)
+                                {
+                                    scepterflag = 0;
+                                }
                             }
-                            
+                            GC.Collect();
                         }
-                    }
+                    }//
                 });
                 
             }                                   
@@ -430,6 +446,45 @@ namespace TkDotNetScrewAoi.module
             }
             GC.Collect();
             Console.WriteLine("移除所有儲列完成");
+        }
+
+        public bool InspectionMatrix(int scepterflag_ ,string figureArray_)
+        {
+            /*權杖由1開始*/
+            string[] strings_ = figureArray_.Split('@');
+            int[] ints = new int[4] { Int16.Parse(strings_[1]), Int16.Parse(strings_[2]), Int16.Parse(strings_[3]), Int16.Parse(strings_[4]) };
+            for (int i =0;i<4;i++)//拍完照片存結果
+            {
+                if (i < 2)
+                {
+                    scepterflagMatrix[scepterflag_,i] = Int16.Parse(strings_[i + 1]);//拍完照片存結果
+                }
+                else
+                {
+                    scepterflagMatrix[scepterflag_, i+18] = Int16.Parse(strings_[i + 1]);//拍完照片存結果
+                }
+            }
+
+            //取出結果
+            for (int i = 0; i < 4; i++)//拍完照片存結果
+            {
+                if (i < 2)
+                {
+                    if (scepterflagMatrix[scepterflag_, 21-i] != 0)//21 20
+                        return false;
+                }
+                else
+                {
+                    if (scepterflagMatrix[scepterflag_, 3-i] != 0)//1 0
+                        return false;
+                }
+                scepterflag_ = scepterflag_ - 1;
+                if(scepterflag_ < 0)
+                {
+                    scepterflag_ = 3;
+                }
+            }
+            return true;
         }
     }
 }
