@@ -450,6 +450,7 @@ namespace TkDotNetScrewAoi.module
 
         public bool InspectionMatrix(int scepterflag_ ,string figureArray_)
         {
+            int[] ints = new int[4] {21,20,1,0};
             /*權杖由1開始*/
             string[] strings_ = figureArray_.Split('@');
             //int[] ints = new int[4] { Int16.Parse(strings_[1]), Int16.Parse(strings_[2]), Int16.Parse(strings_[3]), Int16.Parse(strings_[4]) };
@@ -464,18 +465,20 @@ namespace TkDotNetScrewAoi.module
                     scepterflagMatrix[scepterflag_, i+18] = Int16.Parse(strings_[i + 1]);//拍完照片存結果
                 }
             }
-            int[] ints= new int[4];
-            
 
             //取出結果
-            if (scepterflagMatrix[scepterflag_, 1] != 0)
-            { return false; }
-            if (scepterflagMatrix[scepterflag_, 0] != 0)
-            { return false; }
-            if (scepterflagMatrix[scepterflag_, 21] != 0)
-            { return false; }
-            if (scepterflagMatrix[scepterflag_, 20] != 0)
-            { return false; }
+            for (int i=0;i<4;i++)
+
+            {   if(scepterflagMatrix[scepterflag_, ints[i]] != 0)
+                {
+                    return false;
+                }
+                scepterflag_ = scepterflag_ - 1;
+                if (scepterflag_ == -1)
+                {
+                    scepterflag_ = 21;
+                }
+            }
 
             return true;
         }
