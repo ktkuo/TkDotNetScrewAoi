@@ -40,6 +40,7 @@
             this.hWControl_Ball2 = new HalconDotNet.HWindowControl();
             this.hWControl_Roi2 = new HalconDotNet.HWindowControl();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.button1 = new System.Windows.Forms.Button();
             this.btn_test = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
             this.label_numberImage = new System.Windows.Forms.Label();
@@ -55,7 +56,6 @@
             this.btn_CcdConnect = new System.Windows.Forms.Button();
             this.btn_ImageSave = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.button1 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel4.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -214,13 +214,23 @@
             this.panel2.Size = new System.Drawing.Size(1257, 153);
             this.panel2.TabIndex = 1;
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(642, 48);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(104, 39);
+            this.button1.TabIndex = 7;
+            this.button1.Text = "測試";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // btn_test
             // 
-            this.btn_test.Location = new System.Drawing.Point(532, 48);
+            this.btn_test.Location = new System.Drawing.Point(860, 54);
             this.btn_test.Name = "btn_test";
             this.btn_test.Size = new System.Drawing.Size(104, 39);
             this.btn_test.TabIndex = 6;
-            this.btn_test.Text = "測試";
+            this.btn_test.Text = "馬達測試";
             this.btn_test.UseVisualStyleBackColor = true;
             this.btn_test.Click += new System.EventHandler(this.btn_test_Click);
             // 
@@ -350,7 +360,7 @@
             // 
             // btn_MechaismTest
             // 
-            this.btn_MechaismTest.Location = new System.Drawing.Point(413, 104);
+            this.btn_MechaismTest.Location = new System.Drawing.Point(413, 102);
             this.btn_MechaismTest.Name = "btn_MechaismTest";
             this.btn_MechaismTest.Size = new System.Drawing.Size(104, 39);
             this.btn_MechaismTest.TabIndex = 2;
@@ -385,16 +395,6 @@
             this.statusStrip1.Size = new System.Drawing.Size(1281, 22);
             this.statusStrip1.TabIndex = 2;
             this.statusStrip1.Text = "statusStrip1";
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(642, 48);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(104, 39);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "測試";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // FormImagGet
             // 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.IO.Ports;
 
-namespace TkDotNetScrewAoi.control
+namespace TkDotNetScrewAoi.controls
 {
     public enum ENUM_SerialPortStatus
     {

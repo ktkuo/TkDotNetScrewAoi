@@ -60,7 +60,7 @@ namespace TkDotNetScrewAoi.module
             HObject ho_rectangle1, ho_imageReduced, ho_imagePart=null;
             try
             {                
-                HOperatorSet.GenRectangle1(out ho_rectangle1, roiX - (roiSize * 0.5), roiY - (roiSize * 0.5), roiX + (roiSize * 0.5), roiY + (roiSize * 0.5));//*圈出矩形
+                HOperatorSet.GenRectangle1(out ho_rectangle1, roiX, roiY, roiX + roiSize, roiY+roiSize);//*圈出矩形
                 HOperatorSet.ReduceDomain(ho_imageRaw, ho_rectangle1, out ho_imageReduced);//*與原圖取交集
                 HOperatorSet.CropDomain(ho_imageReduced, out ho_imagePart);//*輸出新的裁切圖
                 
@@ -101,14 +101,15 @@ namespace TkDotNetScrewAoi.module
                 HOperatorSet.SelectShape(ho_connectedRegions, out ho_selectedRegions, "area", "and", 10000, 999999);//*找尋球面積(上下限)
                                                                                                                     //DevWait(ho_selectedRegions, hWindowControl);
 
-                HTuple hv_area, hv_row, hv_column;
-                HOperatorSet.AreaCenter(ho_selectedRegions, out hv_area, out hv_row, out hv_column);//*找出區域的中心座標與面積                                                                                                
-                HTuple hv_size = 500;
-
-                if (ho_selectedRegions != null)
-                {
-                    HOperatorSet.GenRectangle1(out ho_rectangle1, hv_row - (hv_size * 0.5), hv_column - (hv_size * 0.5),//*圈出矩形
-                        hv_row + (hv_size * 0.5), hv_column + (hv_size * 0.5));
+                HOperatorSet.DispObj(ho_connectedRegions, hWindowControl.HalconWindow);
+                HTuple hv_area = null, hv_row=null, hv_column = null;
+                HOperatorSet.AreaCenter(ho_selectedRegions, out hv_area, out hv_row, out hv_column);//*找出區域的中心座標與面積
+                HTuple hv_size = 500, ww, hh,LL;
+                HOperatorSet.TupleLength(hv_row, out LL);
+                if (ho_selectedRegions != null && LL.D>0)
+                {                    
+                    HOperatorSet.GetImageSize(ho_imageRaw,out ww,out hh);
+                    HOperatorSet.GenRectangle1(out ho_rectangle1, hv_row - (hv_size * 0.5), hv_column - (hv_size * 0.5), hv_row + (hv_size * 0.5), hv_column + (hv_size * 0.5));                
                     HOperatorSet.ReduceDomain(ho_imageRaw, ho_rectangle1, out ho_imageReduced);//*與原圖取交集
                     HOperatorSet.CropDomain(ho_imageReduced, out ho_imagePart);//*輸出新的裁切圖
                     if (isSave_)
@@ -132,7 +133,7 @@ namespace TkDotNetScrewAoi.module
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine("切圖演算法異常"+ex.ToString());
             }
             
             return bitmap;

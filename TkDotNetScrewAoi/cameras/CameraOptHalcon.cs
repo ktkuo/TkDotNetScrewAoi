@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using TkDotNetScrewAoi.cameras;
-using TkDotNetScrewAoi.control;
+using TkDotNetScrewAoi.controls;
 using System.IO.Ports;
 using TkDotNetScrewAoi.view;
 using System.Windows.Forms;
@@ -111,7 +111,7 @@ namespace TkDotNetScrewAoi.cameras
         public ENUM_ImageSaveMode enumImageSaveMode = ENUM_ImageSaveMode.INIT;        
         public HObject imageGet=null;
         public int IntervalGrab=20; //取像週期
-        private string nameCcd_= "MachineVision:7K0108EPAK00004";
+        private string nameCcd_= "MachineVision:7K0108EPAK00005";
         public string NameCcd { get { return nameCcd_; } set { nameCcd_ = value; } }
         private bool isTrigger_= false;//硬體觸發
         private bool isGrabWaitForNextGroup_ = false;//6張相片
@@ -125,7 +125,7 @@ namespace TkDotNetScrewAoi.cameras
         public ConcurrentQueue<HObject> queueImageSave = new ConcurrentQueue<HObject>();//圖片儲存
         HalconDotNet.HWindowControl[] hWindowControlsRois, hWindowControlsBalls;
         private ENUM_CcdNumber enumCcdNumber;
-
+        public bool isWait { get; set; }
         public CameraOptHalcon(HalconDotNet.HWindowControl[] hWindowControlsRois_, HalconDotNet.HWindowControl[] hWindowControlsBalls_, ENUM_CcdNumber enumCcdNumber_)
         {
             this.hWindowControlsRois = hWindowControlsRois_;
@@ -175,47 +175,34 @@ namespace TkDotNetScrewAoi.cameras
         {
             try
             {
-                if (!isTesting)
+                if (!IsOpen())
                 {
-                    if (!IsOpen())
+                    if (isTrigger)
                     {
-                        if (isTrigger)
-                        {
-                            HOperatorSet.OpenFramegrabber("HMV3rdParty", 0, 0, 0, 0, 0, 0, "progressive", -1, "default", -1, "false", "default", NameCcd, 0, -1, out hv_AcqHandle);
-                            HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerMode", "On");
-                            HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSource", "Line1");
-                            HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "AcquisitionMode", "Continuous");
-                            HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSelector", "FrameStart");
-                            HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerActivation", "RisingEdge");
-                            this.enumCameraState = ENUM_CameraState.OPEN_TRIGGER;
-                        }
-                        else
-                        {
-                            HOperatorSet.OpenFramegrabber("HMV3rdParty", 0, 0, 0, 0, 0, 0, "progressive", -1, "default", -1, "false", "default", NameCcd, 0, -1, out hv_AcqHandle);
-                            HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerMode", "Off");
-                            HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSource", "Software");
-                            this.enumCameraState = ENUM_CameraState.OPEN_NOTRIGGER;
-                        }
-                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "ExposureTime", (HTuple)this.exposureTime);
-                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "grab_timeout", 5000);
-                        HOperatorSet.GrabImageStart(hv_AcqHandle, -1);
-                        this.enumGrabState = ENUM_GrabState.RUN;
-                        Task.Run(new Action(() =>
-                        {
-                            Run();
-                        }));
+                        HOperatorSet.OpenFramegrabber("HMV3rdParty", 0, 0, 0, 0, 0, 0, "progressive", -1, "default", -1, "false", "default", NameCcd, 0, -1, out hv_AcqHandle);
+                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerMode", "On");
+                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSource", "Line1");
+                        //HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerActivation", "RisingEdge");
+                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "AcquisitionMode", "Continuous");
+                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSelector", "FrameStart");
+                        this.enumCameraState = ENUM_CameraState.OPEN_TRIGGER;
                     }
-                }
-                else
-                {
-                    this.enumCameraState = ENUM_CameraState.OPEN_NOTRIGGER;
+                    else
+                    {
+                        HOperatorSet.OpenFramegrabber("HMV3rdParty", 0, 0, 0, 0, 0, 0, "progressive", -1, "default", -1, "false", "default", NameCcd, 0, -1, out hv_AcqHandle);
+                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerMode", "Off");
+                        HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSource", "Software");
+                        this.enumCameraState = ENUM_CameraState.OPEN_NOTRIGGER;
+                    }
+                    HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "ExposureTime", (HTuple)this.exposureTime);
+                    HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "grab_timeout", -1);
+                    HOperatorSet.GrabImageStart(hv_AcqHandle, -1);
                     this.enumGrabState = ENUM_GrabState.RUN;
                     Task.Run(new Action(() =>
                     {
                         Run();
                     }));
                 }
-                
             }
             catch (Exception ex) 
             {
@@ -226,62 +213,63 @@ namespace TkDotNetScrewAoi.cameras
         public void Close()
         {
             try
-            {
-                if (!isTesting)
-                {
-                    HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerMode", "Off");
-                    HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSource", "Software");
-                    HOperatorSet.CloseFramegrabber(hv_AcqHandle);
-                }
-                this.enumCameraState = ENUM_CameraState.CLOSE;
-                this.enumGrabState = ENUM_GrabState.STOP;
+            {      
+                HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerMode", "Off");                    
+                HOperatorSet.SetFramegrabberParam(hv_AcqHandle, "TriggerSource", "Software");                    
+                HOperatorSet.CloseFramegrabber(hv_AcqHandle);
+                this.enumCameraState = ENUM_CameraState.CLOSE;//關閉CCD成功
             }
             catch (Exception ex)
             {
                 Console.WriteLine("CLOSE CCD ERROR" +ex.Message);
             }
         }
+
         public void Run() 
         {
             Task.Run(new Action(() => 
             {
                 HObject hoImage_;
-                try
-                {                    
-                    while (this.enumGrabState == ENUM_GrabState.RUN)
-                    {
-                        try
-                        {
-                            if (this.enumCameraState == ENUM_CameraState.OPEN_TRIGGER || this.enumCameraState == ENUM_CameraState.OPEN_NOTRIGGER)
-                            {
-                                //HOperatorSet.GrabImageAsync(out hoImage_, hv_AcqHandle, -1);                                    
-                                HOperatorSet.ReadImage(out hoImage_, @"D:\\00_ProgramRepository\\04TkDotNetAoiScrewType\\TkDotNetScrewAoi\\TkDotNetScrewAoi\\imagesTunes\\2022-07-16\\1\\1_1.bmp"); //*讀圖                                    
-                                OnReceiveImg?.Invoke(this, new ImageReceiveArgs(hoImage_));//只要相機開著就持續取像 送出影像                                    
-                                HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber].HalconWindow);                                    
-                                //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber +1].HalconWindow);
-                                Thread.Sleep(1);
-                                //Thread.Sleep(IntervalGrab);//取樣週期
-                                //HTuple ww, hh; HOperatorSet.GetImageSize(hoImage_,out ww ,out hh);Console.WriteLine(ww.D.ToString()+","+hh.D.ToString());
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Thread.Sleep(1);
-                            //TODO 通常是TimeOut
-                            Console.WriteLine("Grab Delay : " + ex.ToString());
-                        }
-                    }
-                    Console.WriteLine("離開取向迴圈");
-                    //關閉相機
-                    while (this.enumCameraState != ENUM_CameraState.CLOSE)
-                    {
-                        Close();
-                    }
-                    Console.WriteLine("相機關閉完成");
-                }
-                catch (Exception ex)
+                while (this.enumGrabState == ENUM_GrabState.RUN)
                 {
-                    Console.WriteLine(ex.ToString());
+                    try
+                    {                            
+                        if (this.enumCameraState == ENUM_CameraState.OPEN_TRIGGER || this.enumCameraState == ENUM_CameraState.OPEN_NOTRIGGER)
+                        {
+                            isWait = true;
+                            HOperatorSet.GrabImageAsync(out hoImage_, hv_AcqHandle, -1);
+                            //HOperatorSet.ReadImage(out hoImage_, @"D:\\02當前程式\\01TkAoiScrew\\TkDotNetScrewAoi\\TkDotNetScrewAoi\\imagesTunes\\2022-07-20\\1.bmp"); //*讀圖
+                            //Console.WriteLine("相片來了");
+                            OnReceiveImg?.Invoke(this, new ImageReceiveArgs(hoImage_));//只要相機開著就持續取像 送出影像        
+                            //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber].HalconWindow);         
+                            //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber +1].HalconWindow);
+                            Thread.Sleep(1);
+                            //Thread.Sleep(IntervalGrab);//取樣週期
+                            //HTuple ww, hh; HOperatorSet.GetImageSize(hoImage_,out ww ,out hh);Console.WriteLine(ww.D.ToString()+","+hh.D.ToString());
+                        }                        
+                    }
+                        
+                    catch (Exception ex)                        
+                    {                            
+                        Thread.Sleep(1);                            
+                        //TODO 通常是TimeOut                            
+                        Console.WriteLine("取像延遲 : " + ex.ToString());                        
+                    }
+                }   
+
+                Console.WriteLine("離開取向迴圈");
+                //關閉相機
+                while (this.enumCameraState != ENUM_CameraState.CLOSE)
+                {
+                    try
+                    {
+                        this.Close();
+                        Console.WriteLine("相機關閉完成");
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine("相機關閉失敗"+ex.ToString());
+                    }
                 }
             }));
         }

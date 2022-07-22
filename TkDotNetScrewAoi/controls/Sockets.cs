@@ -14,7 +14,7 @@ using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Diagnostics;
 
-namespace TkDotNetScrewAoi.control
+namespace TkDotNetScrewAoi.controls
 {
     /*
      *  TCP 父類
@@ -56,9 +56,18 @@ namespace TkDotNetScrewAoi.control
     {
         public byte[] ServerReciveeArray { get; set; }
 
-        public ServerReciveArgs(byte[] _ReciveArray)
+        public ServerReciveArgs(byte[] ReciveArray_)
         {
-            this.ServerReciveeArray = _ReciveArray;
+            this.ServerReciveeArray = ReciveArray_;
+        }
+    }
+
+    public class MessageReciveArgs : EventArgs
+    {
+        public byte[] MessageReciveArray { get; set; }
+        public MessageReciveArgs(byte[] MessageReciveArgs_)
+        {
+            this.MessageReciveArray = MessageReciveArgs_;
         }
     }
 
@@ -80,7 +89,7 @@ namespace TkDotNetScrewAoi.control
 
         public event EventHandler<ServerReciveArgs> OnServerRecive;
 
-        public event EventHandler<SendReciveArgs> OnReciveMsg;
+        public event EventHandler<MessageReciveArgs> OnReciveMsg;
 
         public Stopwatch stopWatchSockets { get; set; }
 
@@ -297,11 +306,11 @@ namespace TkDotNetScrewAoi.control
                     int length = networkStream.Read(bytes, 0, bytes.Length);//持續讀取回傳值
                     if (length > 0)
                     {
-                        Console.WriteLine("收值 : " + length.ToString());
+                        
                         byte[] bytesRead = new byte[length];
                         Array.Copy(bytes, bytesRead, length);
-                        Console.WriteLine("收完值了");
-                        //OnRecive?.Invoke(this, new SocketReciveArgs(bytesRead));//將接收值傳出
+                        //Console.WriteLine("收完值了"+ BitConverter.ToString(CmdScrewSelf.Instance.modeHandle));
+                        OnReciveMsg?.Invoke(this, new MessageReciveArgs(bytesRead));//將訊息送出
                     }
                 }
                 networkStream.Close(); networkStream.Dispose();
@@ -545,5 +554,6 @@ namespace TkDotNetScrewAoi.control
             }
             return -1;
         }
+
     }
 }

@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using HalconDotNet;
 using TkDotNetScrewAoi.cameras;
 using TkDotNetScrewAoi.module;
-using TkDotNetScrewAoi.control;
+using TkDotNetScrewAoi.controls;
 using System.Threading;
 using System.Collections.Concurrent;
 using System.Net;
@@ -26,9 +26,10 @@ namespace TkDotNetScrewAoi.view
 {
     public partial class FormImagGet : Form
     {        
-        public Inspection inspectionScrewType;
+        public InspectionCcd2 inspectionScrewType;
         public DisplayInspection display;
-        public Sockets plc; 
+        public Sockets plc;
+        FormMechnicalTest formMechnical = null;
 
         public FormImagGet()
         {
@@ -37,10 +38,10 @@ namespace TkDotNetScrewAoi.view
             plc.Connect();
             display = new DisplayInspection();
             this.display.hWindowRois=new HWindowControl[] { hWControl_Roi1,hWControl_Roi2,hWControl_Roi3,hWControl_Roi4 } ;
-            this.display.hWindowBalls = new HWindowControl[] { hWControl_Ball1,hWControl_Ball2,hWControl_Ball3,hWControl_Ball4};
+            this.display.hWindowBalls = new HWindowControl[] { hWControl_Ball1,hWControl_Ball2,hWControl_Ball3,hWControl_Ball4 };
             this.display.labelImageNumber = label_numberImage;
             this.display.buttonRun = btn_CcdConnect;
-            this.inspectionScrewType = new Inspection(display);//創建檢測流程
+            this.inspectionScrewType = new InspectionCcd2(display,plc);//創建檢測流程
         }
 
         private void FormImagGet_Load(object sender, EventArgs e)
@@ -54,9 +55,9 @@ namespace TkDotNetScrewAoi.view
             {
                 inspectionScrewType.enumInspectionMode = module.ENUM_InspectionMode.INSPECT;
                 if (!inspectionScrewType.isInspectionRun)
-                    inspectionScrewType.Start();
+                    inspectionScrewType.Start();//啟用檢測流程
                 else
-                    inspectionScrewType.Stop();
+                    inspectionScrewType.Stop();//停止檢測流程
                 inspectionScrewType.isInspectionRun = !inspectionScrewType.isInspectionRun;
             }
             else if (radioButton_modeDev.Checked == true)
@@ -69,7 +70,6 @@ namespace TkDotNetScrewAoi.view
                     inspectionScrewType.isSave = true;//校機存圖
                     inspectionScrewType.Dev();
                 }));
-                
             }
         }
 
@@ -78,12 +78,12 @@ namespace TkDotNetScrewAoi.view
             if (radioButton_Software.Checked)
             {
                 inspectionScrewType.Ccd1.isTrigger = false;
-                inspectionScrewType.Ccd2.isTrigger = false;
+                //inspectionScrewType.Ccd2.isTrigger = false;
             }
             else if (radioButton_External.Checked)
             {
                 inspectionScrewType.Ccd1.isTrigger = true;
-                inspectionScrewType.Ccd2.isTrigger = true;
+                //inspectionScrewType.Ccd2.isTrigger = true;
             }
         }
 
@@ -99,19 +99,35 @@ namespace TkDotNetScrewAoi.view
             }
         }
 
-        bool ll = true;
-        public SerialPorts serialPorts;
+        //bool ll = true;
+        //public SerialPorts serialPorts;
         private void btn_MechaismTest_Click(object sender, EventArgs e)
         {
-            if (serialPorts == null)
-                serialPorts = new SerialPorts();
-            if(ll)
-                serialPorts.Send("COM6", 38400, "sw 0\r");
-            
+            if (formMechnical == null)
+            {
+                formMechnical = new FormMechnicalTest(plc, this.inspectionScrewType);
+                formMechnical.Show();
+                formMechnical.BringToFront();
+                formMechnical.Disposed += new EventHandler(delegate(object o, EventArgs eventArgs) 
+                {                
+                    this.BringToFront();
+                    this.btn_MechaismTest.Text = "機構測試";
+                });
+            }
             else
-                serialPorts.Send("COM6", 38400, "sw 1\r");
-
-            ll = !ll;
+            {
+                formMechnical.Close();
+                formMechnical = null;
+            }
+            //if (serialPorts == null)
+            //    serialPorts = new SerialPorts();
+            //if(ll)
+            //    serialPorts.Send("COM6", 38400, "sw 0\r");
+            //
+            //else
+            //    serialPorts.Send("COM6", 38400, "sw 1\r");
+            //
+            //ll = !ll;
         }
 
         private void radioButton_modeTune_CheckedChanged(object sender, EventArgs e)
@@ -156,27 +172,19 @@ namespace TkDotNetScrewAoi.view
         {
 
         }
-
+        bool mm = false;
         private void btn_test_Click(object sender, EventArgs e)
         {
-            List<string> ints = new List<string>(new string[24]);
-            Console.WriteLine(ints.Count.ToString());
-            
-            for(int i = 0; i < 24; i++)
+            if (mm)
             {
-                int jj = (int)(i / 2);
-                ints[jj]= i.ToString();
-                Console.WriteLine("["+jj.ToString()+","+i.ToString()+"]");
+                plc.Send(CmdScrewSelf.Instance.modeHandle);
+                plc.Send(CmdScrewSelf.Instance.servoMotorPitchGrab);
             }
-            Console.WriteLine("比對");
-            Console.WriteLine(ints.Count.ToString());
-            for (int i = 0; i < 24; i++)
+            else
             {
-                if (ints.Any())
-                {
-                    Console.WriteLine(ints[i].ToString());
-                }                
+                plc.Send(CmdScrewSelf.Instance.modeIdle);
             }
+            mm = !mm;
         }
 
         private void button1_Click(object sender, EventArgs e)
