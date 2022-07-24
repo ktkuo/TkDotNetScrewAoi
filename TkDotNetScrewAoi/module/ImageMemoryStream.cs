@@ -53,7 +53,29 @@ namespace TkDotNetScrewAoi.module
             return memoryStream;
         }
 
-        public async Task<string> Write(Bitmap bitmap_, int xfileName_)
+        public async Task<string> WriteAsync(Bitmap bitmap_, int xfileName_)
+        {
+            try
+            {
+                string fileName_ = "F" + (xfileName_ + 1).ToString() + "_";
+                bitmap_.Save(memoryStreams[xfileName_], System.Drawing.Imaging.ImageFormat.Jpeg);
+                byte[] bytes = memoryStreams[xfileName_].GetBuffer();  //byte[]   bytes=   ms.ToArray(); 
+                memoryStreams[xfileName_].Close();
+                var mmf = MemoryMappedFile.CreateOrOpen(fileName_, bytes.Length, MemoryMappedFileAccess.ReadWrite);
+                var viewAccessor = mmf.CreateViewAccessor(0, bytes.Length);
+                viewAccessor.Write(0, bytes.Length); ;
+                viewAccessor.WriteArray<byte>(0, bytes, 0, bytes.Length);
+                string s = fileName_ + ":" + bytes.Length.ToString();
+                return bytes.Length.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+            return "ERROR";
+        }
+
+        public string Write(Bitmap bitmap_, int xfileName_)
         {
             try
             {

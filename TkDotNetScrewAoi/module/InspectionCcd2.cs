@@ -155,7 +155,7 @@ namespace TkDotNetScrewAoi.module
 
         ~InspectionCcd2()
         {
-            InspectionDispose();
+             InspectionDispose();
         }
 
         public void Start()
@@ -168,6 +168,10 @@ namespace TkDotNetScrewAoi.module
             bool isRever =false;
             if (Ccd1.enumGrabState == ENUM_GrabState.RUN)
             {
+                /*
+                 * 1.將所有的相片提取出queue
+                 * 2.統計是否到達目標張數
+                 */
                 Task.Run(async () =>
                 {
                     HObject hObject1_, hObject2_;
@@ -175,8 +179,8 @@ namespace TkDotNetScrewAoi.module
                     int numberImage = 0;
                     while (isInspectionRun)//是否檢測流程
                     {
-                        //Console.WriteLine("是否檢測流程"+ isInspectionRun.ToString());
                         
+                        //Console.WriteLine("是否檢測流程"+ isInspectionRun.ToString());                        
                         while (true && isfirst_ == true)
                         {
                             Console.WriteLine("等待觸發1");
@@ -184,14 +188,15 @@ namespace TkDotNetScrewAoi.module
                             {
                                 this.plc.Send(CmdScrewSelf.Instance.servoMotorPitchGrab);
                                 Ccd1.isWait = false;
-                                isfirst_ = false;
+                                isfirst_ = false;                                
                                 break;
                             }
                         }
-                        if (numberImageCcd1 == numberImagePerCcd )//兩隻相機集滿12張
+                        if (numberImageCcd1 == numberImagePerCcd )//單隻相機集滿6張queue
                         {
-                            
-                            //numberImageCcd1 == numberImagePerCcd && numberImageCcd2==numberImagePerCcd
+                            stopwatch1.Restart();
+                            stopwatch2.Restart();
+                            //numberImageCcd1 == numberImagePerCcd && numberImageCcd2==numberImagePerCcd //單隻相機集滿12張queue
                             /*啟動前處理流程*/
                             for (int i = 0; i < 12; i++)//12張相片
                             {
@@ -200,8 +205,11 @@ namespace TkDotNetScrewAoi.module
                                     if (queueImageCcd1.TryDequeue(out hObject1_))
                                     {
                                         //(X,Y,SIZE)
-                                        hImages_[i]   = await Algorithm.RoiRegion(hObject1_, 0, 0, 2048);//將相機照片切為2個ROI-1
-                                        hImages_[i+6] = await Algorithm.RoiRegion(hObject1_, 0, 0, 2048);//將相機照片切為2個ROI-2
+                                        stopwatch4.Restart();
+                                        hImages_[i]   = await Algorithm.RoiRegion(displayInspect.hWindowRois[0], hObject1_, 983.636, 7.26321, 1526.78, 856.041);//將相機照片切為2個ROI-1
+                                        stopwatch4.Stop(); Console.WriteLine("RoiRegion時間 : " + stopwatch4.ElapsedMilliseconds.ToString()); stopwatch4.Restart();
+                                        hImages_[i+6] = await Algorithm.RoiRegion(displayInspect.hWindowRois[1],hObject1_, 983.636, 7.26321, 1526.78, 856.041);//將相機照片切為2個ROI-2
+                                        stopwatch4.Stop(); Console.WriteLine("RoiRegion時間 : " + stopwatch4.ElapsedMilliseconds.ToString());
                                         numberImage++;
                                     }
                                 }
@@ -210,129 +218,154 @@ namespace TkDotNetScrewAoi.module
                                     //if (queueImageCcd2.TryDequeue(out hObject2_))
                                     //{
                                     //    //(X,Y,SIZE)
-                                    //    hImages_[i+6]  = await Algorithm.RoiRegion(hObject2_, 400, 800, 500);//將相機照片切為2個ROI-1
-                                    //    hImages_[i+12] = await Algorithm.RoiRegion(hObject2_, 400, 800, 500);//將相機照片切為2個ROI-2
+                                    //    hImages_[i+6]  = await Algorithm.RoiRegion(hObject2_, 400, 800, 500);//將相機照片切為2個ROI-3
+                                    //    hImages_[i+12] = await Algorithm.RoiRegion(hObject2_, 400, 800, 500);//將相機照片切為2個ROI-4
                                     //    numberImage++;
                                     //}
                                 }
                                 
                             }
                             
-                            if (numberImage==6)//所有相片不為空
+                            if (numberImage==6)//所有相片不為空  實際為12張
                             {
-                                //Console.WriteLine("相片集滿");
-                                isImageComplete = true;
+                                isImageComplete = true;//Console.WriteLine("相片集滿");
+                                stopwatch1.Stop(); Console.WriteLine("圖片提取時間 : " + stopwatch1.ElapsedMilliseconds.ToString());
                             }
                             else
                             {
                                 isImageComplete = false;
                             }
-                            /*1~24*/
+
                             if (isImageComplete)
                             {
-                                
+                                stopwatch1.Restart();
                                 try
                                 {
-                                    numberImageCcd1 = 0; numberImageCcd2 = 0;
                                     stopwatch1.Restart();
+                                    numberImageCcd1 = 0; numberImageCcd2 = 0;
+                                    var task1 = GetBalltoStream(displayInspect.hWindowBalls[0], hImages_[0], 0);
+                                    var task2 = GetBalltoStream(displayInspect.hWindowBalls[0], hImages_[0], 1);
+                                    var task3 = GetBalltoStream(displayInspect.hWindowBalls[0], hImages_[0], 2);
+                                    var task4 = GetBalltoStream(displayInspect.hWindowBalls[0], hImages_[0], 3);
+                                    var task5 = GetBalltoStream(displayInspect.hWindowBalls[0], hImages_[0], 4);
+                                    var task6 = GetBalltoStream(displayInspect.hWindowBalls[0], hImages_[0], 5);
+                                    var task7 = GetBalltoStream(displayInspect.hWindowBalls[1], hImages_[1], 6);
+                                    var task8 = GetBalltoStream(displayInspect.hWindowBalls[1], hImages_[1], 7);
+                                    var task9 = GetBalltoStream(displayInspect.hWindowBalls[1], hImages_[1], 8);
+                                    var task10 = GetBalltoStream(displayInspect.hWindowBalls[1], hImages_[1], 9);
+                                    var task11 = GetBalltoStream(displayInspect.hWindowBalls[1], hImages_[1], 10);
+                                    var task12 = GetBalltoStream(displayInspect.hWindowBalls[1], hImages_[1], 11);
+                                    var task13 = GetBalltoStream(displayInspect.hWindowBalls[2], hImages_[2], 12);
+                                    var task14 = GetBalltoStream(displayInspect.hWindowBalls[2], hImages_[2], 13);
+                                    var task15 = GetBalltoStream(displayInspect.hWindowBalls[2], hImages_[2], 14);
+                                    var task16= GetBalltoStream(displayInspect.hWindowBalls[2], hImages_[2], 15);
+                                    var task17 = GetBalltoStream(displayInspect.hWindowBalls[2], hImages_[2], 16);
+                                    var task18 = GetBalltoStream(displayInspect.hWindowBalls[2], hImages_[2], 17);
+                                    var task19= GetBalltoStream(displayInspect.hWindowBalls[3], hImages_[3], 18);
+                                    var task20 = GetBalltoStream(displayInspect.hWindowBalls[3], hImages_[3], 19);
+                                    var task21 = GetBalltoStream(displayInspect.hWindowBalls[3], hImages_[3], 20);
+                                    var task22 = GetBalltoStream(displayInspect.hWindowBalls[3], hImages_[3], 21);
+                                    var task23 = GetBalltoStream(displayInspect.hWindowBalls[3], hImages_[3], 22);
+                                    var task24 = GetBalltoStream(displayInspect.hWindowBalls[3], hImages_[3], 23);
+                                    await Task.WhenAll(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10
+                                        , task11, task12, task13, task14, task15, task16, task17, task18, task19, task20
+                                        , task21, task22, task23, task24);
+                                    stopwatch1.Stop(); Console.WriteLine("異步完成時間ms : " + stopwatch1.ElapsedMilliseconds.ToString());
+
                                     //HOperatorSet.DispObj(hImages_[0], displayInspect.hWindowRois[0].HalconWindow);
-                                    var task1 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[0], 0, 0, false, pathSvae);
-                                    var task2 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[1], 0, 0, false, pathSvae);
-                                    var task3 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[2], 0, 0, false, pathSvae);
-                                    var task4 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[3], 0, 0, false, pathSvae);
-                                    var task5 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[4], 0, 0, false, pathSvae);
-                                    var task6 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[5], 0, 0, false, pathSvae);
-                                    var task7 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[6], 0, 0, false, pathSvae);
-                                    var task8 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[7], 0, 0, false, pathSvae);
-                                    var task9 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[8], 0, 0, false, pathSvae);
-                                    var task10 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[9], 0, 0, false, pathSvae);
-                                    //var task11 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[10], 0, 0, false, pathSvae);
-                                    //var task12 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[11], 0, 0, false, pathSvae);
-                                    //var task13 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[0], 0, 0, false, pathSvae);
-                                    //var task14 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[1], 0, 0, false, pathSvae);
-                                    //var task15 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[2], 0, 0, false, pathSvae);
-                                    //var task16 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[3], 0, 0, false, pathSvae);
-                                    //var task17 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[4], 0, 0, false, pathSvae);
-                                    //var task18 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[5], 0, 0, false, pathSvae);
-                                    //var task19 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[6], 0, 0, false, pathSvae);
-                                    //var task20 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[7], 0, 0, false, pathSvae);
-                                    //var task21 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[8], 0, 0, false, pathSvae);
-                                    //var task22 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[9], 0, 0, false, pathSvae);
-                                    //var task23 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[10], 0, 0, false, pathSvae);
-                                    //var task24 = Algorithm.GetBall(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[11], 0, 0, false, pathSvae);
-                                    await Task.WhenAll(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10);
-                                        //,task11,task12,task13,task14,task15,task16,task17,task18,task19,task20
-                                        //,task21,task22,task23,task24);
+                                    /*
+                                    var task1 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[0], 0, 0, false, pathSvae);
+                                    var task2 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[1], 0, 0, false, pathSvae);
+                                    var task3 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[2], 0, 0, false, pathSvae);
+                                    var task4 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[3], 0, 0, false, pathSvae);
+                                    var task5 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[4], 0, 0, false, pathSvae);
+                                    var task6 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[0], hImages_[5], 0, 0, false, pathSvae);
+                                    var task7 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[6], 0, 0, false, pathSvae);
+                                    var task8 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[7], 0, 0, false, pathSvae);
+                                    var task9 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[8], 0, 0, false, pathSvae);
+                                    var task10 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[9], 0, 0, false, pathSvae);
+                                    var task11 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[10], 0, 0, false, pathSvae);
+                                    var task12 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[1], hImages_[11], 0, 0, false, pathSvae);
+                                    var task13 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[0], 0, 0, false, pathSvae);
+                                    var task14 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[1], 0, 0, false, pathSvae);
+                                    var task15 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[2], 0, 0, false, pathSvae);
+                                    var task16 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[3], 0, 0, false, pathSvae);
+                                    var task17 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[4], 0, 0, false, pathSvae);
+                                    var task18 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[2], hImages_[5], 0, 0, false, pathSvae);
+                                    var task19 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[6], 0, 0, false, pathSvae);
+                                    var task20 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[7], 0, 0, false, pathSvae);
+                                    var task21 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[8], 0, 0, false, pathSvae);
+                                    var task22 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[9], 0, 0, false, pathSvae);
+                                    var task23 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[10], 0, 0, false, pathSvae);
+                                    var task24 = Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage, displayInspect.hWindowBalls[3], hImages_[11], 0, 0, false, pathSvae);
+                                    await Task.WhenAll(task1, task2, task3, task4, task5, task6, task7, task8, task9, task10
+                                        ,task11,task12,task13,task14,task15,task16,task17,task18,task19,task20
+                                        ,task21,task22,task23,task24);
 
-
-                                    stopwatch1.Stop();
-                                    Console.WriteLine("stopwatch1 : " + stopwatch1.ElapsedMilliseconds.ToString());
-                                    //Console.WriteLine("切圖完成");
-
-                                    var taskStream1 = imageMemoryStreams.Write(task1.Result,        0);
-                                    var taskStream2 = imageMemoryStreams.Write(task2.Result,        1);
-                                    var taskStream3 = imageMemoryStreams.Write(task3.Result,        2);
-                                    var taskStream4 = imageMemoryStreams.Write(task4.Result,        3);
-                                    var taskStream5 = imageMemoryStreams.Write(task5.Result,        4);
-                                    var taskStream6 = imageMemoryStreams.Write(task6.Result,        5);
-                                    var taskStream7 = imageMemoryStreams.Write(task7.Result,        6);
-                                    var taskStream8 = imageMemoryStreams.Write(task8.Result,        7);
-                                    var taskStream9 = imageMemoryStreams.Write(task9.Result,        8);
-                                    var taskStream10 = imageMemoryStreams.Write(task10.Result,      9);
-                                    //var taskStream11 = imageMemoryStreams.Write(task11.Result,      10);
-                                    //var taskStream12 = imageMemoryStreams.Write(task12.Result,      11);
-                                    //var taskStream13 = imageMemoryStreams.Write(task13.Result    ,  12);
-                                    //var taskStream14 = imageMemoryStreams.Write(task14.Result    ,  13);
-                                    //var taskStream15 = imageMemoryStreams.Write(task15.Result    ,  14);
-                                    //var taskStream16 = imageMemoryStreams.Write(task16.Result    ,  15);
-                                    //var taskStream17 = imageMemoryStreams.Write(task17.Result    ,  16);
-                                    //var taskStream18 = imageMemoryStreams.Write(task18.Result    ,  17);
-                                    //var taskStream19 = imageMemoryStreams.Write(task19.Result    ,  18);
-                                    //var taskStream20 = imageMemoryStreams.Write(task20.Result    ,  19);
-                                    //var taskStream21= imageMemoryStreams.Write( task21.Result    ,  20);
-                                    //var taskStream22= imageMemoryStreams.Write( task22.Result    ,  21);
-                                    //var taskStream23= imageMemoryStreams.Write( task23.Result    ,  22);
-                                    //var taskStream24= imageMemoryStreams.Write( task24.Result    ,  23);
+                                    var taskStream1 = imageMemoryStreams.WriteAsync(task1.Result,        0);
+                                    var taskStream2 = imageMemoryStreams.WriteAsync(task2.Result,        1);
+                                    var taskStream3 = imageMemoryStreams.WriteAsync(task3.Result,        2);
+                                    var taskStream4 = imageMemoryStreams.WriteAsync(task4.Result,        3);
+                                    var taskStream5 = imageMemoryStreams.WriteAsync(task5.Result,        4);
+                                    var taskStream6 = imageMemoryStreams.WriteAsync(task6.Result,        5);
+                                    var taskStream7 = imageMemoryStreams.WriteAsync(task7.Result,        6);
+                                    var taskStream8 = imageMemoryStreams.WriteAsync(task8.Result,        7);
+                                    var taskStream9 = imageMemoryStreams.WriteAsync(task9.Result,        8);
+                                    var taskStream10 = imageMemoryStreams.WriteAsync(task10.Result,      9);
+                                    var taskStream11 = imageMemoryStreams.WriteAsync(task11.Result,      10);
+                                    var taskStream12 = imageMemoryStreams.WriteAsync(task12.Result,      11);
+                                    var taskStream13 = imageMemoryStreams.WriteAsync(task13.Result    ,  12);
+                                    var taskStream14 = imageMemoryStreams.WriteAsync(task14.Result    ,  13);
+                                    var taskStream15 = imageMemoryStreams.WriteAsync(task15.Result    ,  14);
+                                    var taskStream16 = imageMemoryStreams.WriteAsync(task16.Result    ,  15);
+                                    var taskStream17 = imageMemoryStreams.WriteAsync(task17.Result    ,  16);
+                                    var taskStream18 = imageMemoryStreams.WriteAsync(task18.Result    ,  17);
+                                    var taskStream19 = imageMemoryStreams.WriteAsync(task19.Result    ,  18);
+                                    var taskStream20 = imageMemoryStreams.WriteAsync(task20.Result    ,  19);
+                                    var taskStream21= imageMemoryStreams.WriteAsync( task21.Result    ,  20);
+                                    var taskStream22= imageMemoryStreams.WriteAsync( task22.Result    ,  21);
+                                    var taskStream23= imageMemoryStreams.WriteAsync( task23.Result    ,  22);
+                                    var taskStream24= imageMemoryStreams.WriteAsync( task24.Result    ,  23);
                                     await Task.WhenAll(taskStream1, taskStream2, taskStream3, taskStream4, taskStream5, taskStream6, taskStream7,
-                                        taskStream8, taskStream9, taskStream10);//, taskStream11, taskStream12, taskStream13, taskStream14, taskStream15, taskStream16
-                                        //, taskStream17, taskStream18, taskStream19, taskStream20, taskStream21, taskStream22, taskStream23, taskStream24);
+                                        taskStream8, taskStream9, taskStream10, taskStream11, taskStream12, taskStream13, taskStream14, taskStream15, taskStream16
+                                        , taskStream17, taskStream18, taskStream19, taskStream20, taskStream21, taskStream22, taskStream23, taskStream24);
                                     
-                                    //string[] requestLength = new string[] { 
-                                    //    taskStream1.Result, taskStream2.Result, taskStream3.Result, taskStream4.Result, taskStream5.Result,
-                                    //    taskStream6.Result, taskStream7.Result, taskStream8.Result, taskStream9.Result,
-                                    //    taskStream10.Result, taskStream11.Result, taskStream12.Result, taskStream13.Result,
-                                    //    taskStream14.Result,taskStream15.Result,taskStream16.Result,taskStream17.Result,taskStream18.Result,taskStream19.Result,taskStream20.Result,
-                                    //    taskStream21.Result, taskStream22.Result, taskStream23.Result, taskStream24.Result};
-                                   
-                                    /*string result = await imageMemoryStreams.HttpGet("http:/127.0.0.1:8000/makePredictionBatch/" +
-                                        taskStream1.Result + "/" +
-                                        taskStream2.Result + "/" +
-                                        taskStream3.Result + "/" +
-                                        taskStream4.Result + "/" +
-                                        taskStream5.Result + "/" +
-                                        taskStream6.Result + "/" +
-                                        taskStream7.Result + "/" +
-                                        taskStream8.Result + "/" +
-                                        taskStream9.Result + "/" +
-                                        taskStream10.Result + "/" +
-                                        taskStream11.Result + "/" +
-                                        taskStream12.Result + "/"
-                                        taskStream13.Result + "/" +
-                                        taskStream14.Result + "/" +
-                                        taskStream15.Result + "/" +
-                                        taskStream16.Result + "/" +
-                                        taskStream17.Result + "/" +
-                                        taskStream18.Result + "/" +
-                                        taskStream19.Result + "/" +
-                                        taskStream20.Result + "/" +
-                                        taskStream21.Result + "/" +
-                                        taskStream22.Result + "/" +
-                                        taskStream23.Result + "/" +
-                                        taskStream24.Result + "/"
-                                        );*/
+                                    string[] requestLength = new string[] { 
+                                        taskStream1.Result, taskStream2.Result, taskStream3.Result, taskStream4.Result, taskStream5.Result,
+                                        taskStream6.Result, taskStream7.Result, taskStream8.Result, taskStream9.Result,
+                                        taskStream10.Result, taskStream11.Result, taskStream12.Result, taskStream13.Result,
+                                        taskStream14.Result,taskStream15.Result,taskStream16.Result,taskStream17.Result,taskStream18.Result,taskStream19.Result,taskStream20.Result,
+                                        taskStream21.Result, taskStream22.Result, taskStream23.Result, taskStream24.Result};
+                                    */
 
-                                    bool sort_ = await InspectionMatrix(scepterflag, "@1@2@3@4@");
-                                    
+                                    //string result = await imageMemoryStreams.HttpGet("http:/127.0.0.1:8000/makePredictionBatch/" +
+                                    //    taskStream1.Result + "/" +
+                                    //    taskStream2.Result + "/" +
+                                    //    taskStream3.Result + "/" +
+                                    //    taskStream4.Result + "/" +
+                                    //    taskStream5.Result + "/" +
+                                    //    taskStream6.Result + "/" +
+                                    //    taskStream7.Result + "/" +
+                                    //    taskStream8.Result + "/" +
+                                    //    taskStream9.Result + "/" +
+                                    //    taskStream10.Result + "/" +
+                                    //    taskStream11.Result + "/" +
+                                    //    taskStream12.Result + "/"
+                                    //    taskStream13.Result + "/" +
+                                    //    taskStream14.Result + "/" +
+                                    //    taskStream15.Result + "/" +
+                                    //    taskStream16.Result + "/" +
+                                    //    taskStream17.Result + "/" +
+                                    //    taskStream18.Result + "/" +
+                                    //    taskStream19.Result + "/" +
+                                    //    taskStream20.Result + "/" +
+                                    //    taskStream21.Result + "/" +
+                                    //    taskStream22.Result + "/" +
+                                    //    taskStream23.Result + "/" +
+                                    //    taskStream24.Result + "/"
+                                    //    );
+
+                                    bool sort_ = await InspectionMatrix(scepterflag, "@1@2@3@4@");                                    
                                     scepterflag++;
                                     if (scepterflag == 22)
                                     {
@@ -360,15 +393,14 @@ namespace TkDotNetScrewAoi.module
                                             break;
                                         }
                                     }
-                                    
-                                    
                                 }
                                 catch (Exception ex)
                                 {
                                     Console.WriteLine(ex.ToString());
-                                }
-                                                         
+                                }           
                             }
+                            stopwatch1.Stop(); Console.WriteLine("前處理時間 : " + stopwatch1.ElapsedMilliseconds.ToString());
+                            stopwatch2.Stop(); Console.WriteLine("總時間 : " + stopwatch2.ElapsedMilliseconds.ToString());
                             numberImage = 0;
                             GC.Collect();
                         }
@@ -399,7 +431,93 @@ namespace TkDotNetScrewAoi.module
                 Console.WriteLine("檢測流程關閉異常");
             }
         }
-       
+
+        public async Task<bool> GetBalltoStream(HalconDotNet.HWindowControl hWindowControl_,HObject hImages_,int imageMemoryStreamsNumber_)
+        {
+            //GetBall(Object lock_, HalconDotNet.HWindowControl hWindowControl, HObject ho_imageRaw,bool isSave_, string dirSave)
+            stopwatch3.Restart();
+            Bitmap bitmap = Algorithm.GetBall(lockSaveImage, hWindowControl_, hImages_, false, pathSvae);
+            stopwatch3.Stop(); Console.WriteLine("GetBall完成時間ms : " + stopwatch3.ElapsedMilliseconds.ToString()); stopwatch3.Restart();
+            string fileInfomation_ = imageMemoryStreams.Write(bitmap, imageMemoryStreamsNumber_);//string s = fileName_ + ":" + bytes.Length.ToString();
+            stopwatch3.Stop(); Console.WriteLine("imageMemoryStreams完成時間ms : " + stopwatch3.ElapsedMilliseconds.ToString());
+            return true;
+        }
+
+        /// <summary>
+        /// 分料矩陣
+        /// </summary>
+        /// <param name="scepterflag_"></param>
+        /// <param name="figureArray_"></param>
+        /// <returns></returns>
+        public async Task<bool> InspectionMatrix(int scepterflag_, string figureArray_)
+        {
+            await Task.Delay(10);
+            int[] ints = new int[4] { 21, 20, 1, 0 };
+            /*權杖由1開始*/
+            string[] strings_ = figureArray_.Split('@');
+            for (int i = 0; i < 4; i++)//將辨識結果儲存於矩陣中
+            {
+                if (i < 2)
+                {
+                    scepterflagMatrix[scepterflag_, i] = Int16.Parse(strings_[i + 1]);//將辨識結果儲存於矩陣中
+                }
+                else
+                {
+                    scepterflagMatrix[scepterflag_, i + 18] = Int16.Parse(strings_[i + 1]);//將辨識結果儲存於矩陣中
+                }
+            }
+
+            //取出結果
+            for (int i = 0; i < 4; i++)
+
+            {
+                if (scepterflagMatrix[scepterflag_, ints[i]] != 0)
+                {
+                    //NG PLC
+                    return false;
+                }
+                scepterflag_ = scepterflag_ - 1;
+                if (scepterflag_ == -1)
+                {
+                    scepterflag_ = 21;
+                }
+            }
+            //OK PLC
+            return true;
+        }
+
+        /// <summary>
+        /// 將所有的Queue清空
+        /// </summary>
+        public void InspectionDispose()
+        {
+            HObject hObject_;
+            Bitmap bitmap_;
+            while (true)
+            {
+                queueImageTune1.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageTune2.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageTune3.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageTune4.TryDequeue(out hObject_);                  //InspectionDispose
+                queueImageCcd1.TryDequeue(out hObject_);                   //InspectionDispose
+                queueImageCcd2.TryDequeue(out hObject_);                   //InspectionDispose
+                queueImageRoi1.TryDequeue(out bitmap_);                    //InspectionDispose
+                queueImageRoi2.TryDequeue(out bitmap_);                    //InspectionDispose
+                queueImageRoi3.TryDequeue(out bitmap_);                    //InspectionDispose
+                queueImageRoi4.TryDequeue(out bitmap_);                    //InspectionDispose
+                if ((
+                    queueImageRoi1.Count + queueImageRoi2.Count + queueImageRoi3.Count + queueImageRoi4.Count +   //InspectionDispose
+                    queueImageTune1.Count + queueImageTune2.Count + queueImageTune3.Count + queueImageTune4.Count +   //InspectionDispose
+                    queueImageCcd1.Count + queueImageCcd2.Count) == 0 //InspectionDispose
+                    )//InspectionDispose
+                {
+                    break;
+                }
+                Thread.Sleep(1);
+            }
+            GC.Collect();
+        }
+
         /// <summary>
         /// 開發者模式
         /// </summary>
@@ -415,6 +533,9 @@ namespace TkDotNetScrewAoi.module
                 Task.Run(new Action(() => { ImageLoad(); }));
         }
 
+        /// <summary>
+        /// 開發者 讀圖
+        /// </summary>
         public void ImageLoad()
         {
             HTuple hv_classFiles, hv_imageLoadList, hv_indexClass, hv_path, hv_indexImage;
@@ -459,6 +580,15 @@ namespace TkDotNetScrewAoi.module
             displayInspect.buttonRun.BeginInvoke(new Action(() => {displayInspect.buttonRun.Enabled=true; Console.WriteLine("調機完成"); }));
         }
 
+        /// <summary>
+        /// 開發者模式 調機用
+        /// </summary>
+        /// <param name="stopwatch"></param>
+        /// <param name="sq"></param>
+        /// <param name="queues"></param>
+        /// <param name="hWindowControlRoi_"></param>
+        /// <param name="hWindowControlBall_"></param>
+        /// <param name="path_"></param>
         public async void ImageDip(Stopwatch stopwatch,int sq,ConcurrentQueue<HObject> queues,HWindowControl hWindowControlRoi_, HWindowControl hWindowControlBall_,string path_)
         {
             HObject image_;
@@ -467,82 +597,12 @@ namespace TkDotNetScrewAoi.module
                 if (!queues.IsEmpty)
                 {
                     queues.TryDequeue(out image_);
-                    await Algorithm.GetBall(enumInspectionMode, lockSaveImage,hWindowControlBall_, image_,0,0,isSave, path_);
+                    await Algorithm.GetBallAsync(enumInspectionMode, lockSaveImage,hWindowControlBall_, image_,0,0,isSave, path_);
                     //HOperatorSet.DispObj(image_, hWindowControlRoi_.HalconWindow);
                 }
                 Thread.Sleep(1);
             }
         }
           
-        public void MemoryWrite()
-        {
-
-        }
-
-        public void InspectionDispose()
-        {
-            HObject hObject_;
-            Bitmap bitmap_;
-            while (true)
-            {
-                queueImageTune1.TryDequeue(out hObject_);                  //InspectionDispose
-                queueImageTune2.TryDequeue(out hObject_);                  //InspectionDispose
-                queueImageTune3.TryDequeue(out hObject_);                  //InspectionDispose
-                queueImageTune4.TryDequeue(out hObject_);                  //InspectionDispose
-                queueImageCcd1.TryDequeue(out hObject_);                   //InspectionDispose
-                queueImageCcd2.TryDequeue(out hObject_);                   //InspectionDispose
-                queueImageRoi1.TryDequeue(out bitmap_);                    //InspectionDispose
-                queueImageRoi2.TryDequeue(out bitmap_);                    //InspectionDispose
-                queueImageRoi3.TryDequeue(out bitmap_);                    //InspectionDispose
-                queueImageRoi4.TryDequeue(out bitmap_);                    //InspectionDispose
-                if ((
-                    queueImageRoi1.Count + queueImageRoi2.Count  + queueImageRoi3.Count  + queueImageRoi4.Count +   //InspectionDispose
-                    queueImageTune1.Count+ queueImageTune2.Count + queueImageTune3.Count + queueImageTune4.Count +   //InspectionDispose
-                    queueImageCcd1.Count + queueImageCcd2.Count)== 0 //InspectionDispose
-                    )//InspectionDispose
-                {
-                        break;
-                }
-                Thread.Sleep(1);
-            }
-            GC.Collect();
-        }
-
-        public async Task<bool> InspectionMatrix(int scepterflag_ ,string figureArray_)
-        {
-            await Task.Delay(10);
-            int[] ints = new int[4] {21,20,1,0};
-            /*權杖由1開始*/
-            string[] strings_ = figureArray_.Split('@');
-            //int[] ints = new int[4] { Int16.Parse(strings_[1]), Int16.Parse(strings_[2]), Int16.Parse(strings_[3]), Int16.Parse(strings_[4]) };
-            for (int i =0;i<4;i++)//拍完照片存結果
-            {
-                if (i < 2)
-                {
-                    scepterflagMatrix[scepterflag_,i] = Int16.Parse(strings_[i + 1]);//拍完照片存結果
-                }
-                else
-                {
-                    scepterflagMatrix[scepterflag_, i+18] = Int16.Parse(strings_[i + 1]);//拍完照片存結果
-                }
-            }
-
-            //取出結果
-            for (int i=0;i<4;i++)
-
-            {   if(scepterflagMatrix[scepterflag_, ints[i]] != 0)
-                {
-                    //NG
-                    return false;
-                }
-                scepterflag_ = scepterflag_ - 1;
-                if (scepterflag_ == -1)
-                {
-                    scepterflag_ = 21;
-                }
-            }
-            //OK
-            return true;
-        }
     }
 }

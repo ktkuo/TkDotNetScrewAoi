@@ -111,7 +111,7 @@ namespace TkDotNetScrewAoi.cameras
         public ENUM_ImageSaveMode enumImageSaveMode = ENUM_ImageSaveMode.INIT;        
         public HObject imageGet=null;
         public int IntervalGrab=20; //取像週期
-        private string nameCcd_= "MachineVision:7K0108EPAK00005";
+        private string nameCcd_= "MachineVision:7K0108EPAK00004";
         public string NameCcd { get { return nameCcd_; } set { nameCcd_ = value; } }
         private bool isTrigger_= false;//硬體觸發
         private bool isGrabWaitForNextGroup_ = false;//6張相片
@@ -237,8 +237,8 @@ namespace TkDotNetScrewAoi.cameras
                         if (this.enumCameraState == ENUM_CameraState.OPEN_TRIGGER || this.enumCameraState == ENUM_CameraState.OPEN_NOTRIGGER)
                         {
                             isWait = true;
-                            HOperatorSet.GrabImageAsync(out hoImage_, hv_AcqHandle, -1);
-                            //HOperatorSet.ReadImage(out hoImage_, @"D:\\02當前程式\\01TkAoiScrew\\TkDotNetScrewAoi\\TkDotNetScrewAoi\\imagesTunes\\2022-07-20\\1.bmp"); //*讀圖
+                            //HOperatorSet.GrabImageAsync(out hoImage_, hv_AcqHandle, -1);
+                            HOperatorSet.ReadImage(out hoImage_, @"D:\\00_ProgramRepository\\05TkDotNetScrewAoi\\TkDotNetScrewAoi\\TkDotNetScrewAoi\\imagesTunes\\2022-07-20\\1.bmp"); //*讀圖
                             //Console.WriteLine("相片來了");
                             OnReceiveImg?.Invoke(this, new ImageReceiveArgs(hoImage_));//只要相機開著就持續取像 送出影像        
                             //HOperatorSet.DispObj(hoImage_, this.hWindowControlsRois[(int)enumCcdNumber].HalconWindow);         
